@@ -10,6 +10,35 @@ function isAdmin(user) {
   return ADMIN_IDS.includes(user.id) || ADMIN_EMAILS.includes(user.email) || user.role === 'super_admin';
 }
 
+function resolvePlanByPayment(amount, requestedSlug = '', requestedName = '') {
+  const num = Number(amount) || 0;
+  // If payment is ₹8,000 or more: Ultimate Medical Master Bundle (regular ₹9,999 or discounted)
+  if (num >= 8000) {
+    return {
+      planSlug: 'ultimate',
+      planName: 'Ultimate Medical Master Bundle',
+    };
+  }
+  // If payment is ₹1,500 or more: Pro Counselling plan (regular ₹4,999 or discounted)
+  if (num >= 1500) {
+    if (requestedSlug && String(requestedSlug).toLowerCase().includes('pg')) {
+      return {
+        planSlug: 'neet-pg-pro',
+        planName: requestedName || 'NEET PG Counselling Pro',
+      };
+    }
+    return {
+      planSlug: 'neet-ug-pro',
+      planName: 'NEET UG Counselling Pro',
+    };
+  }
+  // Under ₹1,500 (e.g. ₹99, ₹199, ₹499): BASIC plan
+  return {
+    planSlug: 'basic',
+    planName: 'BASIC',
+  };
+}
+
 async function activatePremium(userId, planSlug, planName, amount, approvedBy) {
   const now = new Date();
   const oneYearLater = new Date(now);
@@ -70,11 +99,40 @@ async function activatePremium(userId, planSlug, planName, amount, approvedBy) {
         payment_status: 'paid',
         payment_amount: Number(amount),
         purchased_counselling: planName,
+        purchased_course: String(planSlug).includes('pg') ? 'MD/MS' : 'MBBS',
         updated_at: now.toISOString(),
       }).eq('id', existing[0].id);
+    } else {
+      const { data: prof } = await supabase.from('profiles').select('email, full_name').eq('id', userId).maybeSingle();
+      await supabase.from('student_counselling').insert({
+        user_id: userId,
+        full_name: prof?.full_name || 'Student',
+        email: prof?.email || '',
+        payment_status: 'paid',
+        payment_amount: Number(amount),
+        purchased_counselling: planName,
+        purchased_course: String(planSlug).includes('pg') ? 'MD/MS' : 'MBBS',
+        counselling_status: 'new',
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      });
     }
   } catch (e) {
     console.warn('student_counselling sync warning:', e.message);
+  }
+
+  // 5. Sync purchases table for CRM tracking
+  try {
+    await supabase.from('purchases').insert({
+      user_id: userId,
+      item_type: 'course',
+      item_name: planName,
+      amount: Number(amount),
+      status: 'paid',
+      created_at: now.toISOString(),
+    });
+  } catch (pErr) {
+    console.warn('purchases sync warning:', pErr.message);
   }
 }
 
@@ -130,86 +188,134 @@ export default async function handler(req, res) {
       return res.status(200).json(data || []);
     }
 
-    // ── POST action=submit: Student submits UTR + screenshot ──
-    if (req.method === 'POST' && action === 'submit') {
+    // ── POST action=submit: Student submits UTR + auto-approves plan according to payment ──
+    if (req.method === 'POST' && (action === 'submit' || !action)) {
       const { plan_slug, plan_name, amount, utr_number, screenshot_url } = req.body || {};
 
-      if (!plan_slug || !plan_name || !amount || !utr_number) {
-        return res.status(400).json({ error: 'plan_slug, plan_name, amount, and utr_number are required' });
+      if (!amount || !utr_number) {
+        return res.status(400).json({ error: 'amount and utr_number are required' });
       }
 
-      if (!utr_number || utr_number.trim().length < 6) {
+      const cleanUtr = String(utr_number).trim();
+      if (cleanUtr.length < 6) {
         return res.status(400).json({ error: 'Please enter a valid UTR / transaction reference number (min 6 characters)' });
       }
 
-      // Check for duplicate UTR
+      // Check for duplicate UTR across different accounts
       const { data: existing } = await supabase
         .from('upi_payment_requests')
-        .select('id')
-        .eq('utr_number', utr_number.trim())
+        .select('id, user_id, plan_name, status')
+        .eq('utr_number', cleanUtr)
         .maybeSingle();
 
-      if (existing) {
-        return res.status(400).json({ error: 'This UTR number has already been submitted. Please contact support if you think this is a mistake.' });
+      if (existing && existing.user_id !== user.id) {
+        return res.status(400).json({ error: 'This UTR number has already been used by another account. Please contact support if you need assistance.' });
       }
 
-      const { data: request, error } = await supabase
-        .from('upi_payment_requests')
-        .insert({
-          user_id: user.id,
-          plan_slug,
-          plan_name,
-          amount: Number(amount),
-          utr_number: utr_number.trim(),
-          screenshot_url: screenshot_url || null,
-          status: 'pending',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
+      // Automatically determine plan according to payment amount
+      const { planSlug: finalPlanSlug, planName: finalPlanName } = resolvePlanByPayment(amount, plan_slug, plan_name);
 
-      if (error) throw error;
+      // Immediately activate premium for the student (no admin approval required)
+      await activatePremium(user.id, finalPlanSlug, finalPlanName, amount, 'auto_approved');
 
-      // Notify all admins
-      const adminNotifications = ADMIN_IDS.map(adminId => ({
+      // Record request directly as approved
+      let request = existing;
+      if (existing) {
+        const { data: updated } = await supabase
+          .from('upi_payment_requests')
+          .update({
+            plan_slug: finalPlanSlug,
+            plan_name: finalPlanName,
+            amount: Number(amount),
+            screenshot_url: screenshot_url || existing.screenshot_url,
+            status: 'approved',
+            approved_by: 'auto_approved',
+            approved_at: new Date().toISOString(),
+            admin_note: 'Automatically approved based on completed payment',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existing.id)
+          .select()
+          .single();
+        request = updated;
+      } else {
+        const { data: created, error: insErr } = await supabase
+          .from('upi_payment_requests')
+          .insert({
+            user_id: user.id,
+            plan_slug: finalPlanSlug,
+            plan_name: finalPlanName,
+            amount: Number(amount),
+            utr_number: cleanUtr,
+            screenshot_url: screenshot_url || null,
+            status: 'approved',
+            approved_by: 'auto_approved',
+            approved_at: new Date().toISOString(),
+            admin_note: 'Automatically approved based on completed payment',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+        if (insErr) {
+          console.warn('UPI payment request insert warning:', insErr.message);
+        }
+        request = created;
+      }
+
+      // Send student in-app confirmation notification
+      await supabase.from('notifications').insert({
+        user_id: user.id,
+        title: `🎉 Payment Confirmed! ${finalPlanName} Activated`,
+        body: `Your payment of ₹${amount} (UTR: ${cleanUtr}) has been automatically verified. Your ${finalPlanName} is now active! All predictions and tools are unlocked. 🚀`,
+        description: `Your ${finalPlanName} package is active. All tools are unlocked.`,
+        type: 'subscription',
+        meta: JSON.stringify({ plan_slug: finalPlanSlug, plan_name: finalPlanName, utr_number: cleanUtr }),
+        read: false,
+        created_at: new Date().toISOString(),
+      });
+
+      // Send push notification to student if subscribed
+      try {
+        const { data: studentPushSubs } = await supabase
+          .from('push_subscriptions')
+          .select('*')
+          .eq('user_id', user.id);
+
+        if (studentPushSubs && studentPushSubs.length > 0) {
+          await Promise.allSettled(studentPushSubs.map((sub) =>
+            sendWebPush(sub, {
+              title: '🎉 Package Activated — MBBSWala',
+              body: `Your ${finalPlanName} is now active! Open MBBSWala to access your premium counselling suite.`,
+              data: { url: '/dashboard' },
+            })
+          ));
+        }
+      } catch (pushErr) {
+        console.warn('Student push notification warning:', pushErr.message);
+      }
+
+      // Notify admins for audit/logging
+      const adminNotifications = ADMIN_IDS.map((adminId) => ({
         user_id: adminId,
-        title: '💰 New Payment Request',
-        body: `${user.email || user.user_metadata?.full_name || 'A student'} submitted ₹${amount} for ${plan_name}. UTR: ${utr_number.trim()}`,
-        description: `Plan: ${plan_name} | Amount: ₹${amount} | UTR: ${utr_number.trim()} | User: ${user.email}`,
+        title: `⚡ Auto-Approved UPI: ₹${amount} (${finalPlanName})`,
+        body: `${user.email || 'Student'} paid ₹${amount} via UPI (UTR: ${cleanUtr}) and was automatically granted ${finalPlanName}.`,
+        description: `Plan: ${finalPlanName} | Amount: ₹${amount} | UTR: ${cleanUtr} | User: ${user.email}`,
         type: 'payment_request',
-        meta: JSON.stringify({ request_id: request.id, user_id: user.id, plan_slug, amount }),
+        meta: JSON.stringify({ request_id: request?.id, user_id: user.id, plan_slug: finalPlanSlug, amount, auto_approved: true }),
         read: false,
         created_at: new Date().toISOString(),
       }));
-
-      await supabase.from('notifications').insert(adminNotifications);
-
-      // Send web push to admin if subscribed
-      try {
-        const { data: pushSubs } = await supabase
-          .from('push_subscriptions')
-          .select('*')
-          .in('user_id', ADMIN_IDS);
-
-        if (pushSubs && pushSubs.length > 0) {
-          // Call push notification endpoint for each admin subscription
-          for (const sub of pushSubs) {
-            await sendWebPush(sub, {
-              title: '💰 New Payment Request — MBBSWala',
-              body: `₹${amount} for ${plan_name}. UTR: ${utr_number.trim()}`,
-              data: { url: '/admin?tab=payments', request_id: request.id },
-            });
-          }
-        }
-      } catch (pushErr) {
-        console.warn('Push notification error:', pushErr.message);
-      }
+      await supabase.from('notifications').insert(adminNotifications).catch(() => {});
 
       return res.status(200).json({
         ok: true,
-        request_id: request.id,
-        message: 'Payment submission received! Please wait up to 5 minutes for admin verification.',
+        is_premium: true,
+        plan_slug: finalPlanSlug,
+        plan_name: finalPlanName,
+        amount: Number(amount),
+        request_id: request?.id,
+        message: `Payment verified! Your ${finalPlanName} plan is now active. Welcome to MBBSWala Premium!`,
       });
     }
 

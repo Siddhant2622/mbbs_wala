@@ -470,17 +470,41 @@ export default async function handler(req, res) {
         isPrem = true;
         subStatus = 'active';
         planName = validCapturedPay.meta?.plan_name || validCapturedPay.plan_slug || 'NEET Counselling Pro';
-      } else if (Boolean(profile?.is_premium) && profile?.subscription_status === 'active') {
-        const isExpired =
-          profile.premium_end_date && new Date(profile.premium_end_date).getTime() < Date.now();
-        if (!isExpired) {
-          isPrem = true;
-          subStatus = 'active';
-          planName =
-            profile.subscription_plan && profile.subscription_plan !== 'Free Plan'
-              ? profile.subscription_plan
-              : 'NEET Counselling Pro';
-          endDate = profile.premium_end_date || null;
+      } else {
+        try {
+          let scQuery = supabase
+            .from('student_counselling')
+            .select('*')
+            .in('payment_status', ['paid', 'Paid', 'PAID']);
+
+          if (user.email && user.email.trim()) {
+            scQuery = scQuery.or(`user_id.eq.${user.id},email.eq.${user.email.trim()}`);
+          } else {
+            scQuery = scQuery.eq('user_id', user.id);
+          }
+
+          const { data: scData } = await scQuery.limit(1);
+          if (scData && scData.length > 0) {
+            isPrem = true;
+            subStatus = 'active';
+            planName = scData[0].purchased_counselling || scData[0].purchased_course || 'NEET Counselling Pro';
+          }
+        } catch (scErr) {
+          console.warn('Payment sync student_counselling check warning:', scErr.message);
+        }
+
+        if (!isPrem && Boolean(profile?.is_premium) && profile?.subscription_status === 'active') {
+          const isExpired =
+            profile.premium_end_date && new Date(profile.premium_end_date).getTime() < Date.now();
+          if (!isExpired) {
+            isPrem = true;
+            subStatus = 'active';
+            planName =
+              profile.subscription_plan && profile.subscription_plan !== 'Free Plan'
+                ? profile.subscription_plan
+                : 'NEET Counselling Pro';
+            endDate = profile.premium_end_date || null;
+          }
         }
       }
 

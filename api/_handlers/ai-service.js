@@ -245,12 +245,13 @@ const PROVIDER_CONFIGS = {
     buildRequest: (payload) => {
       const key = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_2 || DEFAULT_GEMINI_KEY;
       if (!key) return null;
+      const model = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
       return {
-        url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`,
+        url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
         options: {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(120000), // 2 minutes timeout
+          signal: AbortSignal.timeout(15000),
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: payload.system_prompt || SYSTEM_PROMPT }] },
             contents: [{ role: 'user', parts: [{ text: JSON.stringify(payload.user_prompt || payload) }] }],
@@ -285,12 +286,13 @@ const PROVIDER_CONFIGS = {
     buildRequest: (payload) => {
       const key = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_2 || process.env.GEMINI_API_KEY_FALLBACK || DEFAULT_GEMINI_KEY;
       if (!key) return null;
+      const model = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
       return {
-        url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`,
+        url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
         options: {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(120000), // 2 minutes timeout
+          signal: AbortSignal.timeout(15000),
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: payload.system_prompt || SYSTEM_PROMPT }] },
             contents: [{ role: 'user', parts: [{ text: JSON.stringify(payload.user_prompt || payload) }] }],
@@ -330,7 +332,7 @@ const PROVIDER_CONFIGS = {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${key}`,
           },
-          signal: AbortSignal.timeout(60000), // Increased from 12s to 60s
+          signal: AbortSignal.timeout(15000),
           body: JSON.stringify({
             model: 'llama-3.3-70b-versatile',
             temperature: 0.1,
@@ -361,7 +363,7 @@ for (let i = 1; i <= 15; i++) {
       if (!key) return null;
       
       const isWorking25 = [1, 2, 5].includes(i);
-      const model = 'gemini-3.6-flash';
+      const model = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
       
       const generationConfig = isWorking25 
         ? {
@@ -381,7 +383,7 @@ for (let i = 1; i <= 15; i++) {
         options: {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(120000), // Uniform 120s timeout
+          signal: AbortSignal.timeout(15000),
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: payload.system_prompt || SYSTEM_PROMPT }] },
             contents: [{ role: 'user', parts: [{ text: JSON.stringify(payload.user_prompt || payload) }] }],

@@ -2746,7 +2746,7 @@ export function AdminPaymentRequestsPage() {
               </span>
             )}
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">Review and approve manual UPI payments from students</p>
+          <p className="text-sm text-slate-500 mt-0.5">Audit UPI payments from students (Payments are automatically approved upon completion)</p>
         </div>
         <button
           onClick={loadRequests}
@@ -2835,7 +2835,7 @@ export function AdminPaymentRequestsPage() {
                         : req.status === 'approved' ? 'bg-emerald-100 text-emerald-700'
                         : 'bg-red-100 text-red-700'
                       }`}>
-                        {req.status}
+                        {req.status === 'approved' && req.approved_by === 'auto_approved' ? '⚡ Auto-Approved' : req.status}
                       </span>
                       <span className="text-xs text-slate-400 font-medium">
                         {new Date(req.created_at).toLocaleString('en-IN')}

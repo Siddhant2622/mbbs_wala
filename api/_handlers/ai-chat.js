@@ -30,7 +30,7 @@ const FALLBACK_GEMINI_KEYS = [
   'QVEuQWI4Uk42THZFSmsxV0pjMVJDcWFDbW03NWpiVXZ3d1dEQnpVeHBDZ2hTOHdTYU1uNHc='
 ].map(b => (typeof Buffer !== 'undefined' ? Buffer.from(b, 'base64').toString('utf8') : atob(b)));
 
-const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-3.6-flash'];
+const GEMINI_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash'];
 
 function getProviderOrder() {
   const envOrder = process.env.AI_PROVIDER_ORDER;

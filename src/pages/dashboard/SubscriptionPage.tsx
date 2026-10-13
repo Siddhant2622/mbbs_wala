@@ -17,6 +17,8 @@ import {
   Building2,
   Smartphone,
   ExternalLink,
+  Copy,
+  QrCode,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -126,6 +128,58 @@ export function SubscriptionPage() {
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
   const auBankFormRef = useRef<HTMLFormElement>(null);
 
+  // Instant UPI Auto-Approval State
+  const [checkoutTab, setCheckoutTab] = useState<'upi' | 'gateway'>('upi');
+  const [upiUtr, setUpiUtr] = useState('');
+  const [upiCopied, setUpiCopied] = useState(false);
+  const [isSubmittingUpi, setIsSubmittingUpi] = useState(false);
+  const [upiError, setUpiError] = useState('');
+
+  const copyUpiId = () => {
+    navigator.clipboard.writeText('mbbswala060826@aubiz');
+    setUpiCopied(true);
+    setTimeout(() => setUpiCopied(false), 2500);
+  };
+
+  const handleInstantUpiSubmit = async () => {
+    if (!checkoutOrder) return;
+    const clean = upiUtr.trim();
+    if (!clean || clean.length < 6) {
+      setUpiError('Please enter a valid 6 to 12 digit UTR / transaction reference number.');
+      return;
+    }
+
+    try {
+      setIsSubmittingUpi(true);
+      setUpiError('');
+
+      const res = await apiJson<any>('/api/upi-payment', {
+        method: 'POST',
+        body: JSON.stringify({
+          plan_slug: checkoutOrder.plan_slug,
+          plan_name: checkoutOrder.plan_name,
+          amount: checkoutOrder.amount,
+          utr_number: clean,
+        }),
+      }, true);
+
+      if (res?.ok) {
+        success('🎉 Payment Verified!', `Your ${res.plan_name || checkoutOrder.plan_name} has been activated instantly!`);
+        setCheckoutOrder(null);
+        setUpiUtr('');
+        await refetchPremium();
+        await loadData();
+        navigate('/dashboard', { replace: true });
+      } else {
+        setUpiError(res?.error || 'Verification failed. Please check your UTR number.');
+      }
+    } catch (err: any) {
+      setUpiError(err.message || 'Payment verification failed. Please try again.');
+    } finally {
+      setIsSubmittingUpi(false);
+    }
+  };
+
   // Handle redirect callback query parameters (?payment=success or ?payment=failed)
   useEffect(() => {
     const paymentStatus = searchParams.get('payment');
@@ -229,6 +283,16 @@ export function SubscriptionPage() {
   useEffect(() => {
     loadData();
   }, [user]);
+
+  useEffect(() => {
+    const requestedPlanId = searchParams.get('plan');
+    if (requestedPlanId && user && !checkoutOrder) {
+      const match = PLANS.find((p) => p.id === requestedPlanId);
+      if (match) {
+        handleUpgrade(match);
+      }
+    }
+  }, [searchParams, user]);
 
   // Initiate AU Bank payment checkout
   const handleUpgrade = async (plan: Plan) => {
@@ -719,104 +783,193 @@ export function SubscriptionPage() {
                 </div>
               </div>
 
-              {/* Supported Payment Channels */}
-              <div>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5">
-                  Available Payment Options
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-xs font-medium">
-                  <div className="p-3 rounded-xl border border-border/60 bg-card flex items-center gap-2.5">
-                    <Smartphone className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>UPI (GPay / PhonePe / Paytm)</span>
-                  </div>
-                  <div className="p-3 rounded-xl border border-border/60 bg-card flex items-center gap-2.5">
-                    <CreditCard className="w-4 h-4 text-blue-500 shrink-0" />
-                    <span>Cards (Visa / Master / RuPay)</span>
-                  </div>
-                  <div className="p-3 rounded-xl border border-border/60 bg-card flex items-center gap-2.5">
-                    <Building2 className="w-4 h-4 text-amber-500 shrink-0" />
-                    <span>Net Banking (50+ Banks)</span>
-                  </div>
-                  <div className="p-3 rounded-xl border border-border/60 bg-card flex items-center gap-2.5">
-                    <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
-                    <span>AU Bank Direct / Wallets</span>
-                  </div>
-                </div>
+              {/* Payment Method Selector Tabs */}
+              <div className="grid grid-cols-2 gap-2 p-1 bg-muted/60 rounded-2xl border border-border/60">
+                <button
+                  type="button"
+                  onClick={() => setCheckoutTab('upi')}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                    checkoutTab === 'upi'
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Smartphone className="w-4 h-4" />
+                  <span>⚡ Instant UPI / QR</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCheckoutTab('gateway')}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                    checkoutTab === 'gateway'
+                      ? 'bg-primary text-white shadow-md'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <CreditCard className="w-4 h-4" />
+                  <span>Cards / NetBanking</span>
+                </button>
               </div>
 
-              {/* Hidden Form for Live AU Bank Gateway Submission */}
-              {checkoutOrder.isLiveGateway && checkoutOrder.encRequest && (
-                <form
-                  ref={auBankFormRef}
-                  method="POST"
-                  action={checkoutOrder.gatewayUrl}
-                  className="hidden"
-                >
-                  <input type="hidden" name="encRequest" value={checkoutOrder.encRequest} />
-                  <input type="hidden" name="access_code" value={checkoutOrder.accessCode} />
-                </form>
-              )}
+              {/* TAB 1: Instant UPI QR & Auto-Approval */}
+              {checkoutTab === 'upi' ? (
+                <div className="space-y-4">
+                  {/* QR Image + UPI ID */}
+                  <div className="p-4 rounded-2xl border border-border/60 bg-muted/20 flex flex-col items-center gap-3">
+                    <div className="w-44 h-44 rounded-2xl bg-white p-2 border border-border shadow-md flex items-center justify-center overflow-hidden">
+                      <img
+                        src="/upi-qr.jpg"
+                        alt="Scan UPI QR Code"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="w-full flex items-center justify-between gap-2 p-2.5 rounded-xl bg-background border border-border/60">
+                      <div className="min-w-0">
+                        <span className="text-[10px] uppercase font-bold text-muted-foreground">AU Bank UPI ID</span>
+                        <p className="text-xs font-mono font-bold text-foreground truncate select-all">mbbswala060826@aubiz</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={copyUpiId}
+                        className="px-2.5 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold flex items-center gap-1 shrink-0 transition-colors"
+                      >
+                        {upiCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{upiCopied ? 'Copied!' : 'Copy'}</span>
+                      </button>
+                    </div>
 
-              {/* Payment Actions */}
-              {checkoutOrder.isLiveGateway ? (
-                <div className="space-y-3">
-                  <button
-                    type="button"
-                    onClick={handleProceedToAuBank}
-                    disabled={isProcessingCheckout}
-                    className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-primary to-orange-500 text-white font-bold text-sm shadow-xl shadow-primary/25 hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    {isProcessingCheckout ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Opening AU Bank Gateway...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Lock className="w-4 h-4" />
-                        <span>Proceed to AU Bank Payment (₹{checkoutOrder.amount})</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-                  <p className="text-[11px] text-center text-muted-foreground flex items-center justify-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                    <span>256-Bit SSL Encrypted • Authorized by Reserve Bank of India</span>
-                  </p>
-                </div>
-              ) : (
-                /* Developer / Sandbox Mode (When AU Bank production keys are pending in .env) */
-                <div className="space-y-3">
-                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs">
-                    <p className="font-bold flex items-center gap-1.5">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>AU Bank Test / Sandbox Mode</span>
-                    </p>
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      Production credentials can be added to <code className="text-primary font-mono font-bold">.env</code> (AUBANK_MERCHANT_ID, AUBANK_ACCESS_CODE, AUBANK_WORKING_KEY).
-                      You can test the instant premium unlock below:
+                    <a
+                      href={`upi://pay?pa=mbbswala060826@aubiz&pn=MBBSWala&am=${checkoutOrder.amount}&cu=INR&tn=${encodeURIComponent(checkoutOrder.plan_name)}`}
+                      className="w-full py-2.5 px-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center justify-center gap-2 hover:bg-emerald-500/25 transition-colors"
+                    >
+                      <Smartphone className="w-4 h-4" />
+                      <span>Open in UPI App (PhonePe / GPay / Paytm)</span>
+                    </a>
+                  </div>
+
+                  {/* UTR Input Form */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-foreground">
+                      Enter UTR / Transaction Reference Number:
+                    </label>
+                    <input
+                      type="text"
+                      value={upiUtr}
+                      onChange={(e) => {
+                        setUpiUtr(e.target.value);
+                        setUpiError('');
+                      }}
+                      placeholder="e.g. 427612345678 (12-digit UTR)"
+                      className="w-full px-4 py-2.5 rounded-xl border border-border/80 bg-background text-sm font-mono font-bold focus:border-primary focus:outline-none"
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Plan unlocks automatically according to your payment amount. No admin waiting required!
                     </p>
                   </div>
 
+                  {upiError && (
+                    <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{upiError}</span>
+                    </div>
+                  )}
+
                   <button
                     type="button"
-                    onClick={handleSimulatePayment}
-                    disabled={isProcessingCheckout}
-                    className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-sm shadow-xl shadow-emerald-600/25 hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    onClick={handleInstantUpiSubmit}
+                    disabled={isSubmittingUpi || !upiUtr.trim()}
+                    className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-sm shadow-xl shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    {isProcessingCheckout ? (
+                    {isSubmittingUpi ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Activating Premium...</span>
+                        <span>Verifying & Unlocking Plan...</span>
                       </>
                     ) : (
                       <>
                         <CheckCircle2 className="w-4 h-4" />
-                        <span>Complete Test Payment (Instant Unlock)</span>
+                        <span>Verify UTR & Unlock Instantly</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
                   </button>
+                </div>
+              ) : (
+                /* TAB 2: AU Bank Gateway */
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-2 text-xs font-medium">
+                    <div className="p-2.5 rounded-xl border border-border/60 bg-card flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-blue-500 shrink-0" />
+                      <span>Cards (Visa / Master)</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl border border-border/60 bg-card flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span>Net Banking (50+ Banks)</span>
+                    </div>
+                  </div>
+
+                  {/* Hidden Form for Live AU Bank Gateway Submission */}
+                  {checkoutOrder.isLiveGateway && checkoutOrder.encRequest && (
+                    <form
+                      ref={auBankFormRef}
+                      method="POST"
+                      action={checkoutOrder.gatewayUrl}
+                      className="hidden"
+                    >
+                      <input type="hidden" name="encRequest" value={checkoutOrder.encRequest} />
+                      <input type="hidden" name="access_code" value={checkoutOrder.accessCode} />
+                    </form>
+                  )}
+
+                  {checkoutOrder.isLiveGateway ? (
+                    <div className="space-y-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={handleProceedToAuBank}
+                        disabled={isProcessingCheckout}
+                        className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-primary to-orange-500 text-white font-bold text-sm shadow-xl shadow-primary/25 hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {isProcessingCheckout ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Opening AU Bank Gateway...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="w-4 h-4" />
+                            <span>Proceed to Bank Gateway (₹{checkoutOrder.amount})</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+                      <p className="text-[11px] text-center text-muted-foreground flex items-center justify-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>256-Bit SSL Encrypted • Authorized by Reserve Bank of India</span>
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={handleSimulatePayment}
+                        disabled={isProcessingCheckout}
+                        className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-sm shadow-xl shadow-emerald-600/25 hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {isProcessingCheckout ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Activating Premium...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>Complete Test Payment (Instant Unlock)</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

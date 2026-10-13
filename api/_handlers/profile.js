@@ -188,7 +188,7 @@ export default async function handler(req, res) {
           let scQuery = supabase
             .from('student_counselling')
             .select('*')
-            .eq('payment_status', 'Paid');
+            .in('payment_status', ['paid', 'Paid', 'PAID']);
 
           if (user.email && user.email.trim()) {
             scQuery = scQuery.or(`user_id.eq.${user.id},email.eq.${user.email.trim()}`);
@@ -201,7 +201,7 @@ export default async function handler(req, res) {
           if (scData && scData.length > 0) {
             isPremium = true;
             subStatus = 'active';
-            planName = scData[0].purchased_course || 'NEET Counselling Pro';
+            planName = scData[0].purchased_counselling || scData[0].purchased_course || 'NEET Counselling Pro';
           }
         } catch (scErr) {
           console.warn('Student counselling payment check error:', scErr.message);
