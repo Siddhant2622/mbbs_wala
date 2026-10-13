@@ -382,6 +382,24 @@ export function PredictorResults({
     };
   })();
 
+  // Defensive mapping for scholarships_analysis if scholarships array exists in response
+  const scholarshipsAnalysis = aiResponse.scholarships_analysis || (() => {
+    if (aiResponse.scholarships && Array.isArray(aiResponse.scholarships)) {
+      return {
+        eligible: aiResponse.scholarships.map((sch: any) => ({
+          name: sch.name,
+          provider: sch.provider,
+          amount: sch.amount || sch.estimated_amount || sch.amount_description || 'Check Portal',
+          match_reason: sch.match_reason || 'Eligible based on NEET qualifying & category merit',
+          eligibility: typeof sch.eligibility === 'object' ? JSON.stringify(sch.eligibility) : (sch.eligibility || 'Check portal for criteria'),
+          portal: sch.official_portal || sch.portal || 'https://scholarships.gov.in'
+        })),
+        ineligible: []
+      };
+    }
+    return null;
+  })();
+
   return (
     <div className="space-y-6">
       
@@ -754,46 +772,44 @@ export function PredictorResults({
             <span className="text-lg">🏛️</span>
             <h3 className="font-black text-sm uppercase tracking-wider">Management Quota Opportunities</h3>
           </div>
-          {isPremium ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className={`border-b ${s.dark ? 'border-white/10' : 'border-slate-200'}`}>
-                    <th className="pb-2 font-bold">College</th>
-                    <th className="pb-2 font-bold">Rank Req.</th>
-                    <th className="pb-2 font-bold">Tuition Fee</th>
-                    <th className="pb-2 font-bold">Total Cost</th>
-                    <th className="pb-2 font-bold">Chances</th>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className={`border-b ${s.dark ? 'border-white/10' : 'border-slate-200'}`}>
+                  <th className="pb-2 font-bold">College</th>
+                  <th className="pb-2 font-bold">Rank Req.</th>
+                  <th className="pb-2 font-bold">Tuition Fee</th>
+                  <th className="pb-2 font-bold">Total Cost</th>
+                  <th className="pb-2 font-bold">Chances</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(isPremium ? aiResponse.management_quota_opportunities : aiResponse.management_quota_opportunities.slice(0, 2)).map((mq: any, i: number) => (
+                  <tr key={i} className={`border-b ${s.dark ? 'border-white/5' : 'border-slate-100'}`}>
+                    <td className="py-2 font-semibold pr-4">
+                      <button 
+                        onClick={() => setSelectedCollegeInfo(mq)} 
+                        className="font-bold text-[11px] sm:text-xs text-left hover:underline decoration-amber-500 underline-offset-2 transition-all"
+                      >
+                        {mq.college}
+                      </button>
+                    </td>
+                    <td className="py-2 pr-4">{mq.expected_rank}</td>
+                    <td className="py-2 pr-4">{mq.approx_fees}</td>
+                    <td className="py-2 pr-4 font-bold text-amber-500">{mq.total_cost}</td>
+                    <td className="py-2">
+                      <span className="px-2 py-1 rounded bg-primary/10 text-primary font-bold">{mq.chances}</span>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {(aiResponse.management_quota_opportunities || []).map((mq: any, i: number) => (
-                    <tr key={i} className={`border-b ${s.dark ? 'border-white/5' : 'border-slate-100'}`}>
-                      <td className="py-2 font-semibold pr-4">
-                        <button 
-                          onClick={() => setSelectedCollegeInfo(mq)} 
-                          className="font-bold text-[11px] sm:text-xs text-left hover:underline decoration-amber-500 underline-offset-2 transition-all"
-                        >
-                          {mq.college}
-                        </button>
-                      </td>
-                      <td className="py-2 pr-4">{mq.expected_rank}</td>
-                      <td className="py-2 pr-4">{mq.approx_fees}</td>
-                      <td className="py-2 pr-4 font-bold text-amber-500">{mq.total_cost}</td>
-                      <td className="py-2">
-                        <span className="px-2 py-1 rounded bg-primary/10 text-primary font-bold">{mq.chances}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {!isPremium && aiResponse.management_quota_opportunities.length > 2 && (
+            <div className="mt-3 p-3 rounded-xl border border-primary/20 bg-primary/5 flex items-center justify-between flex-wrap gap-2">
+              <p className="text-xs font-bold flex items-center gap-1.5"><Crown className="w-4 h-4 text-primary" /> {aiResponse.management_quota_opportunities.length - 2} more private management seats available</p>
+              <Link to="/dashboard/subscription" className="text-xs bg-primary text-white px-3 py-1.5 rounded-lg font-bold hover:opacity-90">Unlock All</Link>
             </div>
-          ) : (
-            <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 text-center">
-               <Crown className="w-5 h-5 text-primary mx-auto mb-2" />
-               <p className="text-xs font-bold mb-2">Upgrade to Premium to view Management Quota opportunities and costs.</p>
-               <Link to="/dashboard/subscription" className="text-[10px] bg-primary text-white px-3 py-1.5 rounded-full font-bold inline-block">Upgrade Now</Link>
-             </div>
           )}
         </div>
       ) : (() => {
@@ -959,159 +975,157 @@ export function PredictorResults({
         <div className={`rounded-2xl border p-5 ${s.card}`}>
           <div className="flex items-center gap-2 mb-4">
             <span className="text-lg">🦷</span>
-            <h3 className="font-black text-sm uppercase tracking-wider">Alternative Courses</h3>
+            <h3 className="font-black text-sm uppercase tracking-wider">Alternative Medical Courses</h3>
           </div>
-          {isPremium ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(aiResponse.alternative_courses || []).map((alt: any, i: number) => (
-                <div key={i} className={`p-4 rounded-xl border ${s.dark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-black text-lg text-primary">{alt.course}</h4>
-                    <span className="text-[10px] font-bold px-2 py-1 bg-primary/10 text-primary rounded-full">{alt.admission_chances} Chance</span>
-                  </div>
-                  <p className="text-xs mb-1"><span className="font-semibold">Scope:</span> {alt.career_scope}</p>
-                  <p className="text-xs mb-1"><span className="font-semibold">Avg Salary:</span> {alt.average_salary}</p>
-                  <div className="mt-3">
-                    <p className="text-[10px] font-bold uppercase mb-1">Top Colleges</p>
-                    <ul className="text-xs list-disc pl-4 space-y-1">
-                      {(Array.isArray(alt.top_colleges) ? alt.top_colleges : [alt.top_colleges].filter(Boolean)).map((tc: string, j: number) => <li key={j}>{tc}</li>)}
-                    </ul>
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {(isPremium ? aiResponse.alternative_courses : aiResponse.alternative_courses.slice(0, 2)).map((alt: any, i: number) => (
+              <div key={i} className={`p-4 rounded-xl border ${s.dark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-black text-lg text-primary">{alt.course}</h4>
+                  <span className="text-[10px] font-bold px-2 py-1 bg-primary/10 text-primary rounded-full">{alt.admission_chances} Chance</span>
                 </div>
-              ))}
+                <p className="text-xs mb-1"><span className="font-semibold">Scope:</span> {alt.career_scope}</p>
+                <p className="text-xs mb-1"><span className="font-semibold">Avg Salary:</span> {alt.average_salary}</p>
+                {alt.higher_studies && (
+                  <p className="text-xs mb-1"><span className="font-semibold">Higher Studies:</span> {alt.higher_studies}</p>
+                )}
+                <div className="mt-3">
+                  <p className="text-[10px] font-bold uppercase mb-1">Top Recommended Colleges</p>
+                  <ul className="text-xs list-disc pl-4 space-y-1">
+                    {(Array.isArray(alt.top_colleges) ? alt.top_colleges : [alt.top_colleges].filter(Boolean)).map((tc: string, j: number) => <li key={j}>{tc}</li>)}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+          {!isPremium && aiResponse.alternative_courses.length > 2 && (
+            <div className="mt-4 p-4 rounded-xl border border-primary/20 bg-primary/5 flex items-center justify-between flex-wrap gap-2">
+              <p className="text-xs font-bold flex items-center gap-1.5"><Crown className="w-4 h-4 text-primary" /> {aiResponse.alternative_courses.length - 2} more alternative degree options (BHMS, BUMS) available in Premium</p>
+              <Link to="/dashboard/subscription" className="text-xs bg-primary text-white px-3 py-1.5 rounded-lg font-bold hover:opacity-90">Unlock All Courses</Link>
             </div>
-          ) : (
-            <div className="p-6 rounded-xl border border-primary/20 bg-primary/5 text-center">
-               <Crown className="w-6 h-6 text-primary mx-auto mb-3" />
-               <p className="text-sm font-bold mb-2">Premium Feature</p>
-               <p className="text-xs opacity-70 mb-4">Upgrade to view detailed Alternative Courses (BDS, BAMS, BHMS) and career scope.</p>
-               <Link to="/dashboard/subscription" className="text-xs bg-primary text-white px-5 py-2.5 rounded-full font-bold inline-block hover:scale-105 transition">Upgrade Now</Link>
-             </div>
           )}
         </div>
       )}
 
       {/* ── Scholarships ── */}
-      {aiResponse.scholarships_analysis && (
+      {scholarshipsAnalysis && (
         <div className={`rounded-2xl border p-5 ${s.card}`}>
           <div className="flex items-center gap-2 mb-4">
             <span className="text-lg">🎓</span>
             <h3 className="font-black text-sm uppercase tracking-wider">Scholarship Analysis</h3>
           </div>
-          {isPremium ? (
-            <div className="space-y-6">
-              
-              {/* Eligible Scholarships */}
-              {aiResponse.scholarships_analysis.eligible && aiResponse.scholarships_analysis.eligible.length > 0 ? (
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-500 mb-3 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" /> You Are Eligible For
-                  </h4>
-                  <div className="space-y-3">
-                    {aiResponse.scholarships_analysis.eligible.map((sch: any, i: number) => {
-                      const isExpanded = expandedScholarship === `elig-${i}`;
-                      return (
-                        <div key={`elig-${i}`} className={`rounded-xl border transition-all ${s.dark ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'} overflow-hidden`}>
-                          <button 
-                            onClick={() => setExpandedScholarship(isExpanded ? null : `elig-${i}`)}
-                            className="w-full p-4 flex items-start text-left justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                          >
+          <div className="space-y-6">
+            
+            {/* Eligible Scholarships */}
+            {scholarshipsAnalysis.eligible && scholarshipsAnalysis.eligible.length > 0 ? (
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-500 mb-3 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" /> You Are Eligible For
+                </h4>
+                <div className="space-y-3">
+                  {(isPremium ? scholarshipsAnalysis.eligible : scholarshipsAnalysis.eligible.slice(0, 2)).map((sch: any, i: number) => {
+                    const isExpanded = expandedScholarship === `elig-${i}`;
+                    return (
+                      <div key={`elig-${i}`} className={`rounded-xl border transition-all ${s.dark ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'} overflow-hidden`}>
+                        <button 
+                          onClick={() => setExpandedScholarship(isExpanded ? null : `elig-${i}`)}
+                          className="w-full p-4 flex items-start text-left justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                        >
+                          <div>
+                            <h4 className="text-sm font-black text-primary leading-tight mb-1">{sch.name}</h4>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {sch.provider && (
+                                <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                                  {sch.provider}
+                                </span>
+                              )}
+                              {(sch.amount || sch.estimated_amount) && (
+                                <span className="text-[10px] font-bold text-emerald-500">{sch.amount || sch.estimated_amount}</span>
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-primary opacity-60 text-xl font-light ml-4">
+                            {isExpanded ? '−' : '+'}
+                          </span>
+                        </button>
+                        
+                        {isExpanded && (
+                          <div className="p-4 pt-0 border-t border-black/5 dark:border-white/5 mt-2 space-y-3">
+                            {sch.match_reason && (
+                              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">✓ {sch.match_reason}</p>
+                              </div>
+                            )}
                             <div>
-                              <h4 className="text-sm font-black text-primary leading-tight mb-1">{sch.name}</h4>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                {sch.provider && (
-                                  <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                                    {sch.provider}
-                                  </span>
-                                )}
-                                {sch.amount && (
-                                  <span className="text-[10px] font-bold text-emerald-500">{sch.amount}</span>
-                                )}
-                              </div>
+                              <p className="text-[10px] uppercase font-bold opacity-60 mb-1">Eligibility Criteria</p>
+                              <p className={`text-xs ${s.muted}`}>{sch.eligibility || 'Refer to official portal for detailed criteria.'}</p>
                             </div>
-                            <span className="text-primary opacity-60 text-xl font-light ml-4">
-                              {isExpanded ? '−' : '+'}
-                            </span>
-                          </button>
-                          
-                          {isExpanded && (
-                            <div className="p-4 pt-0 border-t border-black/5 dark:border-white/5 mt-2 space-y-3">
-                              {sch.match_reason && (
-                                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                                  <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">✓ {sch.match_reason}</p>
-                                </div>
-                              )}
-                              <div>
-                                <p className="text-[10px] uppercase font-bold opacity-60 mb-1">Eligibility Criteria</p>
-                                <p className={`text-xs ${s.muted}`}>{sch.eligibility || 'Refer to official portal for detailed criteria.'}</p>
-                              </div>
-                              {sch.portal && (
-                                <div className="pt-2">
-                                  <a 
-                                    href={sch.portal} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 transition-opacity"
-                                  >
-                                    Apply on Official Portal <span className="ml-1">→</span>
-                                  </a>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div className="p-4 rounded-xl border border-dashed border-primary/30 bg-primary/5">
-                  <p className="text-xs opacity-80">Based on your current profile, we didn't find specific matches, but you can explore general scholarships below.</p>
-                </div>
-              )}
-
-              {/* Ineligible Scholarships */}
-              {aiResponse.scholarships_analysis.ineligible && aiResponse.scholarships_analysis.ineligible.length > 0 && (
-                <div className="pt-2">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Other Available Scholarships (Not Eligible)</h4>
-                  <div className="space-y-2 opacity-75">
-                    {aiResponse.scholarships_analysis.ineligible.map((sch: any, i: number) => {
-                      const isExpanded = expandedScholarship === `inelig-${i}`;
-                      return (
-                        <div key={`inelig-${i}`} className={`rounded-xl border ${s.dark ? 'bg-white/5 border-white/5' : 'bg-slate-100 border-slate-200'} overflow-hidden`}>
-                          <button 
-                            onClick={() => setExpandedScholarship(isExpanded ? null : `inelig-${i}`)}
-                            className="w-full p-3 flex items-center justify-between text-left hover:bg-black/5 dark:hover:bg-white/5"
-                          >
-                            <span className="text-xs font-semibold">{sch.name}</span>
-                            <span className="text-xs opacity-50 ml-2">{isExpanded ? '▼' : '▶'}</span>
-                          </button>
-                          {isExpanded && (
-                            <div className="p-3 pt-0 text-xs">
-                              <p className="text-red-500 mb-2 font-medium">✗ {sch.rejection_reason}</p>
-                              {sch.portal && (
-                                <a href={sch.portal} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-500 hover:underline">
-                                  View Details
+                            {(sch.portal || sch.official_portal) && (
+                              <div className="pt-2">
+                                <a 
+                                  href={sch.portal || sch.official_portal} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 transition-opacity"
+                                >
+                                  Apply on Official Portal <span className="ml-1">→</span>
                                 </a>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-              
-            </div>
-          ) : (
-            <div className="p-6 rounded-xl border border-primary/20 bg-primary/5 text-center">
-               <Crown className="w-6 h-6 text-primary mx-auto mb-3" />
-               <p className="text-sm font-bold mb-2">Premium Feature</p>
-               <p className="text-xs opacity-70 mb-4">Upgrade to view personalized scholarship opportunities you may be eligible for.</p>
-               <Link to="/dashboard/subscription" className="text-xs bg-primary text-white px-5 py-2.5 rounded-full font-bold inline-block hover:scale-105 transition">Upgrade Now</Link>
-             </div>
-          )}
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl border border-dashed border-primary/30 bg-primary/5">
+                <p className="text-xs opacity-80">Based on your current profile, we didn't find specific matches, but you can explore general scholarships below.</p>
+              </div>
+            )}
+
+            {!isPremium && scholarshipsAnalysis.eligible.length > 2 && (
+              <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 flex items-center justify-between flex-wrap gap-2">
+                <p className="text-xs font-bold flex items-center gap-1.5"><Crown className="w-4 h-4 text-primary" /> {scholarshipsAnalysis.eligible.length - 2} more scholarships unlocked with Premium</p>
+                <Link to="/dashboard/subscription" className="text-xs bg-primary text-white px-3 py-1.5 rounded-lg font-bold hover:opacity-90">Unlock All Scholarships</Link>
+              </div>
+            )}
+
+            {/* Ineligible Scholarships */}
+            {scholarshipsAnalysis.ineligible && scholarshipsAnalysis.ineligible.length > 0 && (
+              <div className="pt-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Other Available Scholarships (Not Eligible)</h4>
+                <div className="space-y-2 opacity-75">
+                  {(isPremium ? scholarshipsAnalysis.ineligible : scholarshipsAnalysis.ineligible.slice(0, 2)).map((sch: any, i: number) => {
+                    const isExpanded = expandedScholarship === `inelig-${i}`;
+                    return (
+                      <div key={`inelig-${i}`} className={`rounded-xl border ${s.dark ? 'bg-white/5 border-white/5' : 'bg-slate-100 border-slate-200'} overflow-hidden`}>
+                        <button 
+                          onClick={() => setExpandedScholarship(isExpanded ? null : `inelig-${i}`)}
+                          className="w-full p-3 flex items-center justify-between text-left hover:bg-black/5 dark:hover:bg-white/5"
+                        >
+                          <span className="text-xs font-semibold">{sch.name}</span>
+                          <span className="text-xs opacity-50 ml-2">{isExpanded ? '▼' : '▶'}</span>
+                        </button>
+                        {isExpanded && (
+                          <div className="p-3 pt-0 text-xs">
+                            <p className="text-red-500 mb-2 font-medium">✗ {sch.rejection_reason}</p>
+                            {(sch.portal || sch.official_portal) && (
+                              <a href={sch.portal || sch.official_portal} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-500 hover:underline">
+                                View Details
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            
+          </div>
         </div>
       )}
 
@@ -1122,38 +1136,34 @@ export function PredictorResults({
             <span className="text-lg">🤖</span>
             <h3 className="font-black text-sm uppercase tracking-wider">AI Recommendation</h3>
           </div>
+          <div className="text-sm leading-relaxed mb-4">
+            {typeof aiResponse.ai_recommendation === 'string' 
+              ? aiResponse.ai_recommendation 
+              : (aiResponse.ai_recommendation?.tip || JSON.stringify(aiResponse.ai_recommendation))}
+          </div>
+          
           {isPremium ? (
-            <>
-              <div className="text-sm leading-relaxed mb-4">
-                {typeof aiResponse.ai_recommendation === 'string' 
-                  ? aiResponse.ai_recommendation 
-                  : (aiResponse.ai_recommendation?.tip || JSON.stringify(aiResponse.ai_recommendation))}
-              </div>
-              
-              {aiResponse.counselling_strategy && (
-                <div className="mt-4 pt-4 border-t border-primary/20">
-                  <h4 className="text-xs font-bold uppercase tracking-wider mb-3">Suggested Counselling Strategy</h4>
-                  <div className="space-y-2">
-                    {Object.entries(aiResponse.counselling_strategy || {}).map(([round, strategy]) => {
-                      if (!strategy || typeof strategy !== 'string') return null;
-                      return (
-                        <div key={round} className="flex gap-3 text-sm">
-                          <div className="w-24 shrink-0 font-bold capitalize text-primary">{round.replace('_', ' ')}</div>
-                          <div className={s.muted}>{strategy}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
+            aiResponse.counselling_strategy && (
+              <div className="mt-4 pt-4 border-t border-primary/20">
+                <h4 className="text-xs font-bold uppercase tracking-wider mb-3">Suggested Counselling Strategy</h4>
+                <div className="space-y-2">
+                  {Object.entries(aiResponse.counselling_strategy || {}).map(([round, strategy]) => {
+                    if (!strategy || typeof strategy !== 'string') return null;
+                    return (
+                      <div key={round} className="flex gap-3 text-sm">
+                        <div className="w-24 shrink-0 font-bold capitalize text-primary">{round.replace('_', ' ')}</div>
+                        <div className={s.muted}>{strategy}</div>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-            </>
+              </div>
+            )
           ) : (
-            <div className="p-6 rounded-xl border border-primary/20 bg-primary/5 text-center">
-               <Crown className="w-6 h-6 text-primary mx-auto mb-3" />
-               <p className="text-sm font-bold mb-2">Premium Feature</p>
-               <p className="text-xs opacity-70 mb-4">Upgrade to unlock personalized AI Counselling Strategy and Recommendations for all rounds.</p>
-               <Link to="/dashboard/subscription" className="text-xs bg-primary text-white px-5 py-2.5 rounded-full font-bold inline-block hover:scale-105 transition">Upgrade Now</Link>
-             </div>
+            <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 flex items-center justify-between flex-wrap gap-2">
+              <p className="text-xs font-bold flex items-center gap-1.5"><Crown className="w-4 h-4 text-primary" /> Full 5-round seat-locking strategy unlocked with Premium</p>
+              <Link to="/dashboard/subscription" className="text-xs bg-primary text-white px-3 py-1.5 rounded-lg font-bold hover:opacity-90">Unlock Strategy</Link>
+            </div>
           )}
         </div>
       )}

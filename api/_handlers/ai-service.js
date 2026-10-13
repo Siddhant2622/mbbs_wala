@@ -245,13 +245,13 @@ const PROVIDER_CONFIGS = {
     buildRequest: (payload) => {
       const key = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_2 || DEFAULT_GEMINI_KEY;
       if (!key) return null;
-      const model = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+      const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
       return {
         url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
         options: {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(15000),
+          signal: AbortSignal.timeout(30000),
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: payload.system_prompt || SYSTEM_PROMPT }] },
             contents: [{ role: 'user', parts: [{ text: JSON.stringify(payload.user_prompt || payload) }] }],
@@ -259,15 +259,11 @@ const PROVIDER_CONFIGS = {
               responseMimeType: 'application/json',
               temperature: 0.15,
               maxOutputTokens: 16384,
-              thinkingConfig: { thinkingBudget: 4096 },
             },
           }),
         },
         parseResponse: async (res) => {
           const data = await res.json();
-          // When thinkingBudget > 0, Gemini returns multiple parts:
-          // parts[0] = thought (no text in JSON mode), parts[1] = actual JSON
-          // Scan all parts for the one containing valid JSON
           const parts = data?.candidates?.[0]?.content?.parts || [];
           let text = null;
           for (const part of parts) {
@@ -286,13 +282,13 @@ const PROVIDER_CONFIGS = {
     buildRequest: (payload) => {
       const key = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_2 || process.env.GEMINI_API_KEY_FALLBACK || DEFAULT_GEMINI_KEY;
       if (!key) return null;
-      const model = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+      const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
       return {
         url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
         options: {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(15000),
+          signal: AbortSignal.timeout(30000),
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: payload.system_prompt || SYSTEM_PROMPT }] },
             contents: [{ role: 'user', parts: [{ text: JSON.stringify(payload.user_prompt || payload) }] }],
@@ -300,7 +296,6 @@ const PROVIDER_CONFIGS = {
               responseMimeType: 'application/json',
               temperature: 0.15,
               maxOutputTokens: 16384,
-              thinkingConfig: { thinkingBudget: 4096 },
             },
           }),
         },
@@ -332,7 +327,7 @@ const PROVIDER_CONFIGS = {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${key}`,
           },
-          signal: AbortSignal.timeout(15000),
+          signal: AbortSignal.timeout(30000),
           body: JSON.stringify({
             model: 'llama-3.3-70b-versatile',
             temperature: 0.1,
@@ -362,32 +357,22 @@ for (let i = 1; i <= 15; i++) {
       const key = process.env[`GEMINI_API_KEY_${i}`] || FALLBACK_GEMINI_KEYS[(i - 1) % FALLBACK_GEMINI_KEYS.length];
       if (!key) return null;
       
-      const isWorking25 = [1, 2, 5].includes(i);
-      const model = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+      const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
       
-      const generationConfig = isWorking25 
-        ? {
-            responseMimeType: 'application/json',
-            temperature: 0.15,
-            maxOutputTokens: 16384,
-            thinkingConfig: { thinkingBudget: 4096 },
-          }
-        : {
-            responseMimeType: 'application/json',
-            temperature: 0.1,
-            maxOutputTokens: 8192,
-          };
-          
       return {
         url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
         options: {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(15000),
+          signal: AbortSignal.timeout(30000),
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: payload.system_prompt || SYSTEM_PROMPT }] },
             contents: [{ role: 'user', parts: [{ text: JSON.stringify(payload.user_prompt || payload) }] }],
-            generationConfig,
+            generationConfig: {
+              responseMimeType: 'application/json',
+              temperature: 0.15,
+              maxOutputTokens: 16384,
+            },
           }),
         },
         parseResponse: async (res) => {
