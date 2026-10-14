@@ -620,13 +620,19 @@ export default async function handler(req, res) {
       const receipt = `rcpt_${user.id.slice(0, 6)}_${Date.now()}`;
 
       // Determine public callback URL for AU Bank PG
-      const rawOrigin =
-        req.headers['origin'] ||
-        req.headers['referer'] ||
-        process.env.APP_URL ||
-        process.env.VITE_APP_URL ||
-        'https://mbbswaala.io';
-      const cleanOrigin = String(rawOrigin).replace(/\/+$/, '').split('?')[0];
+      let cleanOrigin = 'https://mbbswaala.io';
+      try {
+        const candidate = req.headers['origin'] || req.headers['referer'];
+        if (candidate) {
+          const parsed = new URL(candidate);
+          cleanOrigin = parsed.origin;
+        } else if (process.env.APP_URL) {
+          cleanOrigin = new URL(process.env.APP_URL).origin;
+        }
+      } catch {
+        cleanOrigin = process.env.APP_URL || 'https://mbbswaala.io';
+      }
+      cleanOrigin = cleanOrigin.replace(/\/+$/, '');
       const redirectUrl = `${cleanOrigin}/api/payment?action=response`;
       const cancelUrl = `${cleanOrigin}/api/payment?action=response`;
 
@@ -634,16 +640,16 @@ export default async function handler(req, res) {
       let isLiveGateway = auConfig.isLive;
 
       const merchantParams = {
-        merchant_id: auConfig.merchantId || '2',
+        merchant_id: auConfig.merchantId || '4473724',
         order_id: orderId,
         currency: 'INR',
         amount: Number(finalAmount).toFixed(2),
         redirect_url: redirectUrl,
         cancel_url: cancelUrl,
         language: 'EN',
-        billing_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Student',
-        billing_email: user.email || '',
-        billing_tel: user.user_metadata?.phone || '',
+        billing_name: (user.user_metadata?.full_name || user.email?.split('@')[0] || 'Student').slice(0, 50),
+        billing_email: (user.email || 'student@mbbswala.in').trim(),
+        billing_tel: (user.user_metadata?.phone || '').replace(/[^0-9]/g, '').slice(-10) || '9876543210',
         merchant_param1: user.id,
         merchant_param2: plan_slug,
         merchant_param3: appliedReferralCode || '',

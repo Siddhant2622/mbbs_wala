@@ -129,7 +129,7 @@ export function SubscriptionPage() {
   const auBankFormRef = useRef<HTMLFormElement>(null);
 
   // Instant UPI Auto-Approval State
-  const [checkoutTab, setCheckoutTab] = useState<'upi' | 'gateway'>('upi');
+  const [checkoutTab, setCheckoutTab] = useState<'gateway' | 'upi'>('gateway');
   const [upiUtr, setUpiUtr] = useState('');
   const [upiCopied, setUpiCopied] = useState(false);
   const [isSubmittingUpi, setIsSubmittingUpi] = useState(false);
@@ -331,7 +331,34 @@ export function SubscriptionPage() {
         return;
       }
 
-      // Open AU Bank Checkout Modal
+      // Live AU Bank Payment Gateway: Direct launch like Razorpay
+      if (orderRes?.isLiveGateway && orderRes?.encRequest && orderRes?.gatewayUrl) {
+        success('Redirecting to Payment Gateway', 'Connecting to AU Small Finance Bank secure checkout...');
+
+        // Dynamically submit POST form to AU Bank gateway
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = orderRes.gatewayUrl;
+        form.style.display = 'none';
+
+        const encInput = document.createElement('input');
+        encInput.type = 'hidden';
+        encInput.name = 'encRequest';
+        encInput.value = orderRes.encRequest;
+        form.appendChild(encInput);
+
+        const codeInput = document.createElement('input');
+        codeInput.type = 'hidden';
+        codeInput.name = 'access_code';
+        codeInput.value = orderRes.accessCode;
+        form.appendChild(codeInput);
+
+        document.body.appendChild(form);
+        form.submit();
+        return;
+      }
+
+      // Fallback checkout modal for simulated test mode
       setCheckoutOrder(orderRes);
     } catch (err: any) {
       if (
@@ -358,6 +385,26 @@ export function SubscriptionPage() {
     if (checkoutOrder.isLiveGateway && checkoutOrder.encRequest) {
       if (auBankFormRef.current) {
         auBankFormRef.current.submit();
+      } else {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = checkoutOrder.gatewayUrl;
+        form.style.display = 'none';
+
+        const encInput = document.createElement('input');
+        encInput.type = 'hidden';
+        encInput.name = 'encRequest';
+        encInput.value = checkoutOrder.encRequest;
+        form.appendChild(encInput);
+
+        const codeInput = document.createElement('input');
+        codeInput.type = 'hidden';
+        codeInput.name = 'access_code';
+        codeInput.value = checkoutOrder.accessCode;
+        form.appendChild(codeInput);
+
+        document.body.appendChild(form);
+        form.submit();
       }
     }
   };
@@ -787,18 +834,6 @@ export function SubscriptionPage() {
               <div className="grid grid-cols-2 gap-2 p-1 bg-muted/60 rounded-2xl border border-border/60">
                 <button
                   type="button"
-                  onClick={() => setCheckoutTab('upi')}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-                    checkoutTab === 'upi'
-                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Smartphone className="w-4 h-4" />
-                  <span>⚡ Instant UPI / QR</span>
-                </button>
-                <button
-                  type="button"
                   onClick={() => setCheckoutTab('gateway')}
                   className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                     checkoutTab === 'gateway'
@@ -807,12 +842,101 @@ export function SubscriptionPage() {
                   }`}
                 >
                   <CreditCard className="w-4 h-4" />
-                  <span>Cards / NetBanking</span>
+                  <span>💳 Online Gateway</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCheckoutTab('upi')}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                    checkoutTab === 'upi'
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Smartphone className="w-4 h-4" />
+                  <span>⚡ Offline UPI / UTR</span>
                 </button>
               </div>
 
-              {/* TAB 1: Instant UPI QR & Auto-Approval */}
-              {checkoutTab === 'upi' ? (
+              {/* TAB 1: AU Bank Gateway (Primary) */}
+              {checkoutTab === 'gateway' ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-2 text-xs font-medium">
+                    <div className="p-2.5 rounded-xl border border-border/60 bg-card flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-blue-500 shrink-0" />
+                      <span>Cards & NetBanking</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl border border-border/60 bg-card flex items-center gap-2">
+                      <Smartphone className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>UPI & Dynamic QR</span>
+                    </div>
+                  </div>
+
+                  {/* Hidden Form for Live AU Bank Gateway Submission */}
+                  {checkoutOrder.isLiveGateway && checkoutOrder.encRequest && (
+                    <form
+                      ref={auBankFormRef}
+                      method="POST"
+                      action={checkoutOrder.gatewayUrl}
+                      className="hidden"
+                    >
+                      <input type="hidden" name="encRequest" value={checkoutOrder.encRequest} />
+                      <input type="hidden" name="access_code" value={checkoutOrder.accessCode} />
+                    </form>
+                  )}
+
+                  {checkoutOrder.isLiveGateway ? (
+                    <div className="space-y-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={handleProceedToAuBank}
+                        disabled={isProcessingCheckout}
+                        className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-primary to-orange-500 text-white font-bold text-sm shadow-xl shadow-primary/25 hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {isProcessingCheckout ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Opening AU Bank Gateway...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="w-4 h-4" />
+                            <span>Proceed to Bank Gateway (₹{checkoutOrder.amount})</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+                      <p className="text-[11px] text-center text-muted-foreground flex items-center justify-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>256-Bit SSL Encrypted • Authorized by Reserve Bank of India</span>
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={handleSimulatePayment}
+                        disabled={isProcessingCheckout}
+                        className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-sm shadow-xl shadow-emerald-600/25 hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {isProcessingCheckout ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Activating Premium...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>Complete Test Payment (Instant Unlock)</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* TAB 2: Offline UPI QR & Manual UTR Fallback */
                 <div className="space-y-4">
                   {/* QR Image + UPI ID */}
                   <div className="p-4 rounded-2xl border border-border/60 bg-muted/20 flex flex-col items-center gap-3">
@@ -893,83 +1017,6 @@ export function SubscriptionPage() {
                       </>
                     )}
                   </button>
-                </div>
-              ) : (
-                /* TAB 2: AU Bank Gateway */
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-2 text-xs font-medium">
-                    <div className="p-2.5 rounded-xl border border-border/60 bg-card flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 text-blue-500 shrink-0" />
-                      <span>Cards (Visa / Master)</span>
-                    </div>
-                    <div className="p-2.5 rounded-xl border border-border/60 bg-card flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-amber-500 shrink-0" />
-                      <span>Net Banking (50+ Banks)</span>
-                    </div>
-                  </div>
-
-                  {/* Hidden Form for Live AU Bank Gateway Submission */}
-                  {checkoutOrder.isLiveGateway && checkoutOrder.encRequest && (
-                    <form
-                      ref={auBankFormRef}
-                      method="POST"
-                      action={checkoutOrder.gatewayUrl}
-                      className="hidden"
-                    >
-                      <input type="hidden" name="encRequest" value={checkoutOrder.encRequest} />
-                      <input type="hidden" name="access_code" value={checkoutOrder.accessCode} />
-                    </form>
-                  )}
-
-                  {checkoutOrder.isLiveGateway ? (
-                    <div className="space-y-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={handleProceedToAuBank}
-                        disabled={isProcessingCheckout}
-                        className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-primary to-orange-500 text-white font-bold text-sm shadow-xl shadow-primary/25 hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                      >
-                        {isProcessingCheckout ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Opening AU Bank Gateway...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Lock className="w-4 h-4" />
-                            <span>Proceed to Bank Gateway (₹{checkoutOrder.amount})</span>
-                            <ArrowRight className="w-4 h-4" />
-                          </>
-                        )}
-                      </button>
-                      <p className="text-[11px] text-center text-muted-foreground flex items-center justify-center gap-1.5">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                        <span>256-Bit SSL Encrypted • Authorized by Reserve Bank of India</span>
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={handleSimulatePayment}
-                        disabled={isProcessingCheckout}
-                        className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-sm shadow-xl shadow-emerald-600/25 hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                      >
-                        {isProcessingCheckout ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Activating Premium...</span>
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle2 className="w-4 h-4" />
-                            <span>Complete Test Payment (Instant Unlock)</span>
-                            <ArrowRight className="w-4 h-4" />
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
