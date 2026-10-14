@@ -245,7 +245,7 @@ const PROVIDER_CONFIGS = {
     buildRequest: (payload) => {
       const key = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_2 || DEFAULT_GEMINI_KEY;
       if (!key) return null;
-      const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+      const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
       return {
         url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
         options: {
@@ -282,7 +282,7 @@ const PROVIDER_CONFIGS = {
     buildRequest: (payload) => {
       const key = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_2 || process.env.GEMINI_API_KEY_FALLBACK || DEFAULT_GEMINI_KEY;
       if (!key) return null;
-      const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+      const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
       return {
         url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
         options: {
@@ -357,7 +357,7 @@ for (let i = 1; i <= 15; i++) {
       const key = process.env[`GEMINI_API_KEY_${i}`] || FALLBACK_GEMINI_KEYS[(i - 1) % FALLBACK_GEMINI_KEYS.length];
       if (!key) return null;
       
-      const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+      const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
       
       return {
         url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
@@ -394,17 +394,24 @@ for (let i = 1; i <= 15; i++) {
 
 /**
  * Get provider order from env or use default.
+ * Only 3 priority Gemini keys + groq fallback — each key gets maximum retry time.
  */
 function getProviderOrder() {
   const envOrder = process.env.AI_PROVIDER_ORDER;
   if (envOrder) {
     return envOrder.split(',').map((s) => s.trim().toLowerCase()).filter((p) => PROVIDER_CONFIGS[p]);
   }
-  return ['gemini', 'gemini_1', 'gemini_2', 'gemini_3', 'gemini_4', 'gemini_5', 'gemini_6', 'gemini_7', 'gemini_8', 'gemini_9', 'gemini_10', 'gemini_11', 'gemini_12', 'gemini_13', 'gemini_14', 'gemini_15', 'groq'];
+  // Only 3 priority keys — we give each one maximum time to respond
+  return ['gemini', 'gemini_1', 'gemini_2', 'groq'];
 }
+
+/** Small delay helper for retry backoff */
+function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
 /**
  * Call AI providers in failover order. Returns the parsed PredictorResponse.
+ * Uses only 3 priority keys but gives each key maximum retries (up to 5)
+ * with generous exponential backoff to wait out temporary 503 overloads.
  */
 export async function callAI(payload) {
   const order = getProviderOrder();
@@ -419,38 +426,68 @@ export async function callAI(payload) {
       continue;
     }
 
-    try {
-      console.log(`[AI] Trying ${config.name}...`);
-      const res = await fetch(reqConfig.url, reqConfig.options);
+    // Give each key up to ~2 minutes of retry time with generous backoff
+    const maxRetries = 7;
 
-      if (!res.ok) {
-        const errorBody = await res.text().catch(() => '');
-        throw new Error(`${config.name} responded ${res.status}: ${errorBody.slice(0, 200)}`);
-      }
-
-      const parsed = await reqConfig.parseResponse(res);
-
-      if (!parsed || typeof parsed !== 'object') {
-        throw new Error(`${config.name} returned invalid JSON structure`);
-      }
-
-      if (!parsed.meta) parsed.meta = {};
-      if (!parsed.disclaimers_fraud_warnings) parsed.disclaimers_fraud_warnings = [];
-
-      console.log(`[AI] ${config.name} succeeded.`);
-
-      return { ...parsed, _provider_used: providerKey };
-    } catch (err) {
-      console.warn(`[AI] ${config.name} failed:`, err.message);
-      lastError = err;
-      
-      // If the error was a timeout, DO NOT retry other Gemini keys to prevent 504 Gateway Timeout.
-      // We only want to retry on instant failures (like 429 rate limit or 400 invalid model).
-      if (err.name === 'TimeoutError' || err.message.includes('timeout') || err.message.includes('aborted')) {
-        console.warn(`[AI] Timeout detected. Skipping remaining Gemini keys to prevent Nginx 504.`);
-        if (providerKey.startsWith('gemini')) {
-           break;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        if (attempt > 0) {
+          // Backoff: 5s, 10s, 15s, 20s, 25s, 30s, 30s (~135s total wait per key)
+          const backoffMs = Math.min(5000 * attempt, 30000);
+          console.log(`[AI] Retrying ${config.name} after ${backoffMs / 1000}s (attempt ${attempt + 1}/${maxRetries + 1})...`);
+          await delay(backoffMs);
+        } else {
+          console.log(`[AI] Trying ${config.name}...`);
         }
+
+        const res = await fetch(reqConfig.url, reqConfig.options);
+
+        if (!res.ok) {
+          const errorBody = await res.text().catch(() => '');
+          const err = new Error(`${config.name} responded ${res.status}: ${errorBody.slice(0, 200)}`);
+          err.httpStatus = res.status;
+          throw err;
+        }
+
+        const parsed = await reqConfig.parseResponse(res);
+
+        if (!parsed || typeof parsed !== 'object') {
+          throw new Error(`${config.name} returned invalid JSON structure`);
+        }
+
+        if (!parsed.meta) parsed.meta = {};
+        if (!parsed.disclaimers_fraud_warnings) parsed.disclaimers_fraud_warnings = [];
+
+        console.log(`[AI] ${config.name} succeeded on attempt ${attempt + 1}.`);
+        return { ...parsed, _provider_used: providerKey };
+      } catch (err) {
+        lastError = err;
+
+        // 503 (overloaded) or 429 (rate limited) — these are transient, keep retrying this key
+        const isTransient = err.httpStatus === 503 || err.httpStatus === 429
+          || err.message.includes('503') || err.message.includes('429')
+          || err.message.includes('UNAVAILABLE') || err.message.includes('overloaded');
+
+        if (isTransient && attempt < maxRetries) {
+          console.warn(`[AI] ${config.name} returned ${err.httpStatus || 'transient error'} (attempt ${attempt + 1}), will retry with backoff...`);
+          continue; // retry same key with backoff
+        }
+
+        console.warn(`[AI] ${config.name} failed after ${attempt + 1} attempt(s):`, err.message);
+
+        // If the error was a timeout, skip to next provider (don't waste more time on this key)
+        if (err.name === 'TimeoutError' || err.message.includes('timeout') || err.message.includes('aborted')) {
+          console.warn(`[AI] Timeout detected on ${config.name}. Moving to next provider.`);
+          break;
+        }
+        
+        // If it's a model error (400/404), all keys will fail the same way — skip all
+        if (err.message.includes('400') || err.message.includes('404') || err.message.includes('not found') || err.message.includes('not supported')) {
+          console.warn(`[AI] Model/config error detected (${err.message.slice(0, 80)}). Skipping all remaining providers.`);
+          throw lastError; // No point trying other keys
+        }
+
+        break; // Non-retryable error, move to next provider
       }
     }
   }
