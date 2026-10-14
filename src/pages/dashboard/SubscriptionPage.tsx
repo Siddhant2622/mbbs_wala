@@ -59,7 +59,7 @@ const PLANS: Plan[] = [
   {
     id: 'neet-ug-pro',
     name: 'NEET UG Counselling Pro',
-    price: 900,
+    price: 4999,
     originalPrice: 4999,
     badge: 'Specialized',
     popular: false,
@@ -76,7 +76,7 @@ const PLANS: Plan[] = [
   {
     id: 'ultimate',
     name: 'Ultimate Medical Master Bundle',
-    price: 1100,
+    price: 9999,
     originalPrice: 9999,
     badge: 'Best Value',
     popular: false,
@@ -101,6 +101,7 @@ interface AuBankOrder {
   encRequest: string;
   amount: number;
   original_amount: number;
+  upgrade_credit: number;
   currency: string;
   plan_slug: string;
   plan_name: string;
@@ -119,6 +120,7 @@ export function SubscriptionPage() {
   const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null);
   const [payments, setPayments] = useState<any[]>([]);
   const [activeSub, setActiveSub] = useState<any>(null);
+  const [previousPaidAmount, setPreviousPaidAmount] = useState<number>(0);
   const [error, setError] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [referralMsg, setReferralMsg] = useState({ type: '', text: '' });
@@ -273,6 +275,14 @@ export function SubscriptionPage() {
       const data = await apiJson<any>('/api/payment', {}, true);
       setPayments(data.payments || []);
       setActiveSub(data.subscription || null);
+
+      // Track previously paid amount for upgrade credit display
+      const capturedPayments = (data.payments || []).filter(
+        (p: any) => ['captured', 'success', 'paid'].includes(p.status)
+      );
+      if (capturedPayments.length > 0) {
+        setPreviousPaidAmount(Number(capturedPayments[0].amount) || 0);
+      }
     } catch (e: any) {
       console.warn('Subscription fetch:', e.message);
     } finally {
@@ -607,15 +617,31 @@ export function SubscriptionPage() {
               </div>
 
               <div className="mb-6 flex items-baseline gap-2">
-                <span className="text-3xl sm:text-4xl font-black text-foreground">
-                  ₹{plan.price.toLocaleString()}
-                </span>
-                <span className="text-xs text-muted-foreground line-through">
-                  ₹{plan.originalPrice.toLocaleString()}
-                </span>
-                <span className="text-[10px] font-black text-emerald-500 uppercase px-1.5 py-0.5 rounded bg-emerald-500/10">
-                  {Math.round(((plan.originalPrice - plan.price) / plan.originalPrice) * 100)}% OFF
-                </span>
+                {isUpgrade && previousPaidAmount > 0 ? (
+                  <>
+                    <span className="text-3xl sm:text-4xl font-black text-foreground">
+                      ₹{Math.max(0, plan.price - previousPaidAmount).toLocaleString()}
+                    </span>
+                    <span className="text-xs text-muted-foreground line-through">
+                      ₹{plan.price.toLocaleString()}
+                    </span>
+                    <span className="text-[10px] font-black text-blue-500 uppercase px-1.5 py-0.5 rounded bg-blue-500/10">
+                      ₹{previousPaidAmount} credit applied
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-3xl sm:text-4xl font-black text-foreground">
+                      ₹{plan.price.toLocaleString()}
+                    </span>
+                    <span className="text-xs text-muted-foreground line-through">
+                      ₹{plan.originalPrice.toLocaleString()}
+                    </span>
+                    <span className="text-[10px] font-black text-emerald-500 uppercase px-1.5 py-0.5 rounded bg-emerald-500/10">
+                      {Math.round(((plan.originalPrice - plan.price) / plan.originalPrice) * 100)}% OFF
+                    </span>
+                  </>
+                )}
               </div>
 
               <div className="space-y-3 mb-8 flex-1">
@@ -814,13 +840,33 @@ export function SubscriptionPage() {
                   </span>
                 </div>
 
-                {checkoutOrder.original_amount > checkoutOrder.amount && (
+                {checkoutOrder.upgrade_credit > 0 && (
+                  <div className="flex justify-between text-blue-500 font-semibold">
+                    <span className="flex items-center gap-1">
+                      <Crown className="w-3.5 h-3.5" />
+                      Previous Plan Credit:
+                    </span>
+                    <span>-₹{checkoutOrder.upgrade_credit.toLocaleString()}</span>
+                  </div>
+                )}
+
+                {checkoutOrder.original_amount > checkoutOrder.amount && !checkoutOrder.upgrade_credit && (
                   <div className="flex justify-between text-emerald-500 font-semibold">
                     <span className="flex items-center gap-1">
                       <Gift className="w-3.5 h-3.5" />
                       Referral Discount:
                     </span>
                     <span>-₹{(checkoutOrder.original_amount - checkoutOrder.amount).toLocaleString()}</span>
+                  </div>
+                )}
+
+                {checkoutOrder.upgrade_credit > 0 && checkoutOrder.original_amount - checkoutOrder.upgrade_credit > checkoutOrder.amount && (
+                  <div className="flex justify-between text-emerald-500 font-semibold">
+                    <span className="flex items-center gap-1">
+                      <Gift className="w-3.5 h-3.5" />
+                      Referral Discount:
+                    </span>
+                    <span>-₹{(checkoutOrder.original_amount - checkoutOrder.upgrade_credit - checkoutOrder.amount).toLocaleString()}</span>
                   </div>
                 )}
 

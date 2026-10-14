@@ -12,15 +12,15 @@ function isAdmin(user) {
 
 function resolvePlanByPayment(amount, requestedSlug = '', requestedName = '') {
   const num = Number(amount) || 0;
-  // If payment is ₹1,000 or more: Ultimate Medical Master Bundle (regular ₹1,100 or discounted)
-  if (num >= 1000 || requestedSlug === 'ultimate') {
+  // If payment is ₹8,000 or more: Ultimate Medical Master Bundle (regular ₹9,999 or discounted)
+  if (num >= 8000 || requestedSlug === 'ultimate') {
     return {
       planSlug: 'ultimate',
       planName: 'Ultimate Medical Master Bundle',
     };
   }
-  // If payment is ₹500 or more: Pro Counselling plan (regular ₹900 or discounted)
-  if (num >= 500 || requestedSlug === 'neet-ug-pro' || requestedSlug === 'neet-pg-pro') {
+  // If payment is ₹3,000 or more: Pro Counselling plan (regular ₹4,999 or discounted)
+  if (num >= 3000 || requestedSlug === 'neet-ug-pro' || requestedSlug === 'neet-pg-pro') {
     if (requestedSlug && String(requestedSlug).toLowerCase().includes('pg')) {
       return {
         planSlug: 'neet-pg-pro',
@@ -214,6 +214,29 @@ export default async function handler(req, res) {
 
       // Automatically determine plan according to payment amount
       const { planSlug: finalPlanSlug, planName: finalPlanName } = resolvePlanByPayment(amount, plan_slug, plan_name);
+
+      // ── Upgrade Credit: Check if user is upgrading from a lower plan ──
+      let upgradeCredit = 0;
+      try {
+        const PLAN_LEVELS = { 'BASIC': 1, 'NEET UG Counselling Pro': 2, 'Premium Plan': 2, 'Ultimate Medical Master Bundle': 3 };
+        const { data: existingSub } = await supabase
+          .from('subscriptions')
+          .select('plan_name, amount')
+          .eq('user_id', user.id)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (existingSub && existingSub.length > 0) {
+          const currentLevel = PLAN_LEVELS[existingSub[0].plan_name] || 0;
+          const targetLevel = PLAN_LEVELS[finalPlanName] || 0;
+          if (targetLevel > currentLevel) {
+            upgradeCredit = Number(existingSub[0].amount) || 0;
+          }
+        }
+      } catch (ucErr) {
+        console.warn('[UPI Upgrade Credit] Warning:', ucErr.message);
+      }
 
       // Immediately activate premium for the student (no admin approval required)
       await activatePremium(user.id, finalPlanSlug, finalPlanName, amount, 'auto_approved');

@@ -15,9 +15,9 @@ const REFERRAL_REWARD_AMOUNT = 500;
 
 const PLANS = {
   basic: { name: 'BASIC', price: 99 },
-  'neet-ug-pro': { name: 'NEET UG Counselling Pro', price: 900 },
-  ultimate: { name: 'Ultimate Medical Master Bundle', price: 1100 },
-  premium: { name: 'Premium Plan', price: 900 }, // Fallback for legacy
+  'neet-ug-pro': { name: 'NEET UG Counselling Pro', price: 4999 },
+  ultimate: { name: 'Ultimate Medical Master Bundle', price: 9999 },
+  premium: { name: 'Premium Plan', price: 4999 }, // Fallback for legacy
 };
 
 const PLAN_LEVELS = {
@@ -590,6 +590,28 @@ export default async function handler(req, res) {
       let finalAmount = plan.price;
       let appliedReferralCode = null;
       let referrerId = null;
+      let upgradeCredit = 0;
+
+      // ── Upgrade Credit: Subtract previously paid amount ──
+      if (isAlreadyPaid && currentLevel < targetLevel) {
+        try {
+          // Find the most recent captured payment for this user
+          const { data: prevPayments } = await supabase
+            .from('payments')
+            .select('amount, plan_slug, status')
+            .eq('user_id', user.id)
+            .in('status', ['captured', 'success', 'paid'])
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          if (prevPayments && prevPayments.length > 0) {
+            upgradeCredit = Number(prevPayments[0].amount) || 0;
+            finalAmount = Math.max(0, finalAmount - upgradeCredit);
+          }
+        } catch (ucErr) {
+          console.warn('[Upgrade Credit] Could not fetch previous payment:', ucErr.message);
+        }
+      }
 
       // Validate referral code if provided
       if (referral_code) {
@@ -696,6 +718,7 @@ export default async function handler(req, res) {
         encRequest,
         amount: finalAmount,
         original_amount: plan.price,
+        upgrade_credit: upgradeCredit,
         currency: 'INR',
         plan_slug,
         plan_name,
