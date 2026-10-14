@@ -297,7 +297,7 @@ CREATE POLICY "Users manage own documents" ON user_documents FOR ALL USING (true
 -- ── Seed default packages ───────────────────────────────────────────────────
 INSERT INTO packages (name, slug, price, price_label, description, sort_order) VALUES
   ('Free Plan', 'free', 0, 'Free', 'Basic access to college finder and seat matrix', 1),
-  ('NEET UG Counselling', 'neet-ug', 4999, '₹4,999', 'Full NEET UG counselling support with rank predictor and expert guidance', 2),
+  ('NEET UG Counselling', 'neet-ug', 900, '₹900', 'Full NEET UG counselling support with rank predictor and expert guidance', 2),
   ('NEET PG Counselling', 'neet-pg', 6999, '₹6,999', 'Complete PG counselling with speciality-wise analysis', 3),
-  ('Premium Bundle', 'premium', 9999, '₹9,999', 'All-in-one package: UG + PG counselling, priority support, document review', 4)
+  ('Premium Bundle', 'premium', 1100, '₹1,100', 'All-in-one package: UG + PG counselling, priority support, document review', 4)
 ON CONFLICT (slug) DO NOTHING;

@@ -12,15 +12,15 @@ function isAdmin(user) {
 
 function resolvePlanByPayment(amount, requestedSlug = '', requestedName = '') {
   const num = Number(amount) || 0;
-  // If payment is ₹8,000 or more: Ultimate Medical Master Bundle (regular ₹9,999 or discounted)
-  if (num >= 8000) {
+  // If payment is ₹1,000 or more: Ultimate Medical Master Bundle (regular ₹1,100 or discounted)
+  if (num >= 1000 || requestedSlug === 'ultimate') {
     return {
       planSlug: 'ultimate',
       planName: 'Ultimate Medical Master Bundle',
     };
   }
-  // If payment is ₹1,500 or more: Pro Counselling plan (regular ₹4,999 or discounted)
-  if (num >= 1500) {
+  // If payment is ₹500 or more: Pro Counselling plan (regular ₹900 or discounted)
+  if (num >= 500 || requestedSlug === 'neet-ug-pro' || requestedSlug === 'neet-pg-pro') {
     if (requestedSlug && String(requestedSlug).toLowerCase().includes('pg')) {
       return {
         planSlug: 'neet-pg-pro',
@@ -32,7 +32,7 @@ function resolvePlanByPayment(amount, requestedSlug = '', requestedName = '') {
       planName: 'NEET UG Counselling Pro',
     };
   }
-  // Under ₹1,500 (e.g. ₹99, ₹199, ₹499): BASIC plan
+  // Under ₹500 (e.g. ₹99, ₹199): BASIC plan
   return {
     planSlug: 'basic',
     planName: 'BASIC',

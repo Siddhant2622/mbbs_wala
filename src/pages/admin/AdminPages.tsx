@@ -2575,8 +2575,8 @@ export function AdminAlertsPage() {
 
 const PLAN_OPTIONS = [
   { slug: 'basic', name: 'BASIC Plan', price: 99 },
-  { slug: 'neet-ug-pro', name: 'NEET UG Counselling Pro', price: 4999 },
-  { slug: 'ultimate', name: 'Ultimate Medical Master Bundle', price: 9999 },
+  { slug: 'neet-ug-pro', name: 'NEET UG Counselling Pro', price: 900 },
+  { slug: 'ultimate', name: 'Ultimate Medical Master Bundle', price: 1100 },
 ];
 
 export function AdminPaymentRequestsPage() {

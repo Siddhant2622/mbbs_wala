@@ -15,9 +15,9 @@ const REFERRAL_REWARD_AMOUNT = 500;
 
 const PLANS = {
   basic: { name: 'BASIC', price: 99 },
-  'neet-ug-pro': { name: 'NEET UG Counselling Pro', price: 4999 },
-  ultimate: { name: 'Ultimate Medical Master Bundle', price: 9999 },
-  premium: { name: 'Premium Plan', price: 4999 }, // Fallback for legacy
+  'neet-ug-pro': { name: 'NEET UG Counselling Pro', price: 900 },
+  ultimate: { name: 'Ultimate Medical Master Bundle', price: 1100 },
+  premium: { name: 'Premium Plan', price: 900 }, // Fallback for legacy
 };
 
 const PLAN_LEVELS = {
