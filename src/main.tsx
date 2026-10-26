@@ -8,7 +8,6 @@ import { AuthProvider } from './contexts/AuthContext'
 import { PremiumProvider } from './lib/premium'
 import { ToastProvider } from './contexts/ToastContext'
 import { handleGoogleRedirect } from './lib/googleAuth'
-import PremiumLoader from './components/PremiumLoader'
 
 handleGoogleRedirect()
 
@@ -18,7 +17,6 @@ createRoot(document.getElementById('root')!).render(
       <AuthProvider>
         <PremiumProvider>
           <ToastProvider>
-            <PremiumLoader />
             <App />
           </ToastProvider>
         </PremiumProvider>

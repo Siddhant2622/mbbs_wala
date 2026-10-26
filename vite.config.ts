@@ -87,6 +87,11 @@ export default defineConfig(async ({ mode }) => {
     build: {
       cssCodeSplit: true,
       sourcemap: false,
+      modulePreload: {
+        resolveDependencies(_filename: string, deps: string[]) {
+          return deps.filter((dep: string) => !dep.includes('vendor-motion'));
+        },
+      },
       rollupOptions: {
         output: {
           manualChunks: {

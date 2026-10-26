@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useScroll, useMotionValueEvent } from 'framer-motion';
 import { ChevronDown, X } from 'lucide-react';
 import BrandLogo from './BrandLogo';
 import ThemeToggle from './ui/ThemeToggle';
@@ -46,18 +45,32 @@ export default function Navbar() {
   const location = useLocation();
 
   const [isVisible, setIsVisible] = useState(true);
-  const { scrollY } = useScroll();
 
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    const previous = scrollY.getPrevious() || 0;
-    if (latest < 50) {
-      setIsVisible(true);
-    } else if (latest > previous && latest > 50) {
-      setIsVisible(false); // scrolling down
-    } else if (latest < previous) {
-      setIsVisible(true); // scrolling up
-    }
-  });
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const latest = window.scrollY;
+          if (latest < 50) {
+            setIsVisible(true);
+          } else if (latest > lastY && latest > 50) {
+            setIsVisible(false); // scrolling down
+          } else if (latest < lastY) {
+            setIsVisible(true); // scrolling up
+          }
+          lastY = latest;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     setMobileOpen(false);

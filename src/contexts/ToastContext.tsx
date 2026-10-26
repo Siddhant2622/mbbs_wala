@@ -6,9 +6,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, Info, AlertTriangle, XCircle, X } from 'lucide-react';
-import { toastVariants } from '../lib/motion';
 
 export type ToastTone = 'success' | 'error' | 'info' | 'warning';
 
@@ -97,38 +95,31 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         className="fixed bottom-5 right-5 z-[2000] flex flex-col gap-2.5 w-[min(100vw-2rem,380px)] pointer-events-none"
         aria-live="polite"
       >
-        <AnimatePresence mode="popLayout">
-          {items.map((t) => {
-            const Icon = icons[t.tone || 'info'];
-            return (
-              <motion.div
-                key={t.id}
-                layout
-                variants={toastVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                className={`pointer-events-auto flex gap-3 rounded-2xl border px-4 py-3 shadow-2xl backdrop-blur-md ${tones[t.tone || 'info']}`}
+        {items.map((t) => {
+          const Icon = icons[t.tone || 'info'];
+          return (
+            <div
+              key={t.id}
+              className={`pointer-events-auto flex gap-3 rounded-2xl border px-4 py-3 shadow-2xl backdrop-blur-md transition-all duration-300 ${tones[t.tone || 'info']}`}
+            >
+              <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${iconTone[t.tone || 'info']}`} />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold leading-snug">{t.title}</p>
+                {t.description && (
+                  <p className="text-xs font-medium opacity-80 mt-0.5 leading-relaxed">{t.description}</p>
+                )}
+              </div>
+              <button
+                type="button"
+                aria-label="Dismiss"
+                onClick={() => dismiss(t.id)}
+                className="opacity-50 hover:opacity-100 transition-opacity shrink-0"
               >
-                <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${iconTone[t.tone || 'info']}`} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold leading-snug">{t.title}</p>
-                  {t.description && (
-                    <p className="text-xs font-medium opacity-80 mt-0.5 leading-relaxed">{t.description}</p>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  aria-label="Dismiss"
-                  onClick={() => dismiss(t.id)}
-                  className="opacity-50 hover:opacity-100 transition-opacity shrink-0"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          );
+        })}
       </div>
     </ToastContext.Provider>
   );

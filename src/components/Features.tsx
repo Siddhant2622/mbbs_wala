@@ -346,6 +346,8 @@ export default function Features() {
                   <WebPImg
                     src={f.image}
                     alt={f.title}
+                    width={800}
+                    height={500}
                     className="absolute inset-0 w-full h-full object-cover"
                     loading="lazy"
                     decoding="async"
@@ -397,7 +399,15 @@ export default function Features() {
               className="rounded-3xl overflow-hidden border border-slate-200 bg-white shadow-sm"
             >
               <div className="aspect-[16/10] relative">
-                <WebPImg src={f.image} alt={f.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                <WebPImg
+                  src={f.image}
+                  alt={f.title}
+                  width={600}
+                  height={375}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                 <span className="absolute bottom-3 left-3 text-[11px] font-bold uppercase tracking-wider text-white bg-black/40 backdrop-blur px-2.5 py-1 rounded-full">
                   Feature {f.badge}

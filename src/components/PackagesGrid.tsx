@@ -98,6 +98,8 @@ export default function PackagesGrid({ limit }: { limit?: number }) {
               <WebPImg
                 src={illMap[pkg.slug] || '/images/mbbswala/pkg-steth.jpg'}
                 alt=""
+                width={160}
+                height={160}
                 loading="lazy"
                 decoding="async"
                 className="absolute bottom-0 right-0 w-40 h-40 object-cover opacity-70 group-hover:opacity-90 group-hover:scale-110 transition-all duration-700 rounded-tl-[2rem] drop-shadow-lg"
