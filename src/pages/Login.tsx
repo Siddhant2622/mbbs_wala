@@ -151,6 +151,24 @@ export default function Login({ defaultPortal }: LoginProps) {
   const isRefFromURL = useMemo(() => !!new URLSearchParams(window.location.search).get('ref'), []);
   const from = (location.state as { from?: string } | null)?.from || '/dashboard';
 
+  // Check if visitor entered via the ₹99 Pack Offer Banner
+  const isFromBanner = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return (
+      params.get('from') === 'banner_99' ||
+      (location.state as { fromBanner?: boolean } | null)?.fromBanner === true ||
+      sessionStorage.getItem('mbbs_banner_redirect') === '/dashboard/subscription'
+    );
+  }, [location.state]);
+
+  // Persist banner redirect flag in sessionStorage if entered through banner
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('from') === 'banner_99' || (location.state as { fromBanner?: boolean } | null)?.fromBanner) {
+      sessionStorage.setItem('mbbs_banner_redirect', '/dashboard/subscription');
+    }
+  }, [location.state]);
+
   // Removed duplicate useAuth()
 
   // Detect if we are processing an OAuth callback (implicit flow via hash, or PKCE via sessionStorage flag)
@@ -232,6 +250,7 @@ export default function Login({ defaultPortal }: LoginProps) {
 
       if (staffAccount) {
         sessionStorage.removeItem('google_oauth_pending');
+        sessionStorage.removeItem('mbbs_banner_redirect');
         navigate('/admin', { replace: true });
         return;
       }
@@ -248,10 +267,15 @@ export default function Login({ defaultPortal }: LoginProps) {
       const isGoogleOAuth = isOAuthRedirect;
       sessionStorage.removeItem('google_oauth_pending');
 
+      const bannerRedirect = sessionStorage.getItem('mbbs_banner_redirect');
+
       if (!isProfileComplete) {
         window.location.replace('/onboarding');
       } else if (isGoogleOAuth && !user.user_metadata?.profile_completed) {
         window.location.replace('/onboarding');
+      } else if (bannerRedirect) {
+        sessionStorage.removeItem('mbbs_banner_redirect');
+        window.location.replace(bannerRedirect);
       } else if (from.startsWith('/admin')) {
         window.location.replace('/dashboard');
       } else {
@@ -449,9 +473,12 @@ export default function Login({ defaultPortal }: LoginProps) {
         }
 
         if (isStaffAccount) {
+          sessionStorage.removeItem('mbbs_banner_redirect');
           window.location.replace('/admin');
           return;
         }
+
+        const bannerRedirect = sessionStorage.getItem('mbbs_banner_redirect');
 
         // Normal student profile verification
         try {
@@ -470,6 +497,12 @@ export default function Login({ defaultPortal }: LoginProps) {
             window.location.replace('/onboarding');
             return;
           }
+        }
+
+        if (bannerRedirect) {
+          sessionStorage.removeItem('mbbs_banner_redirect');
+          window.location.replace(bannerRedirect);
+          return;
         }
 
         // Always send to /dashboard after login (or back to the page they came from, if it's not home/admin/login)
@@ -720,6 +753,26 @@ export default function Login({ defaultPortal }: LoginProps) {
                     </p>
                   </motion.div>
                 </AnimatePresence>
+
+                {isFromBanner && portal === 'student' && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="mt-4 p-3 rounded-2xl bg-gradient-to-r from-orange-500/15 via-amber-500/10 to-orange-500/15 border border-orange-500/30 flex items-center gap-3 text-left"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-orange-600 dark:text-orange-400">
+                        ₹99 Pack Offer Applied
+                      </p>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                        Sign in to activate your access on the subscription page.
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
               </div>
 
               {isOAuthRedirect ? (

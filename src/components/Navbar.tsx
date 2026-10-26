@@ -188,14 +188,22 @@ export default function Navbar() {
 
           <div className="hidden md:flex items-center gap-2 shrink-0">
             <ThemeToggle />
-            <Link to="/login" className="btn-orange px-5 py-2.5 text-sm touch-manipulation">
+            <Link
+              to="/login"
+              onClick={() => sessionStorage.removeItem('mbbs_banner_redirect')}
+              className="btn-orange px-5 py-2.5 text-sm touch-manipulation"
+            >
               Login
             </Link>
           </div>
 
           <div className="flex md:hidden items-center gap-1.5">
             <ThemeToggle />
-            <Link to="/login" className="btn-orange px-3.5 py-2 text-xs sm:text-sm touch-manipulation">
+            <Link
+              to="/login"
+              onClick={() => sessionStorage.removeItem('mbbs_banner_redirect')}
+              className="btn-orange px-3.5 py-2 text-xs sm:text-sm touch-manipulation"
+            >
               Login
             </Link>
             <button

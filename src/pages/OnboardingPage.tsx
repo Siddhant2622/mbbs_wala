@@ -321,6 +321,12 @@ export default function OnboardingPage() {
       // This guarantees a fresh React + Auth state from JWT (which now has profile_completed:true)
       // completely bypassing any stale React state or race conditions.
       setTimeout(() => {
+        const bannerRedirect = sessionStorage.getItem('mbbs_banner_redirect');
+        if (bannerRedirect) {
+          sessionStorage.removeItem('mbbs_banner_redirect');
+          window.location.replace(bannerRedirect);
+          return;
+        }
         window.location.replace('/dashboard');
       }, 1200);
     } catch (err: any) {

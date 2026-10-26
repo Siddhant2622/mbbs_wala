@@ -5,6 +5,7 @@ import ChoiceFinder from '../components/ChoiceFinder';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import PromoBannerPopup from '../components/PromoBannerPopup';
 
 // Lazy-load all below-fold sections to reduce initial JS parse time
 // This cuts the critical path JS by ~50%, reducing LCP render delay
@@ -132,6 +133,9 @@ export default function Home() {
       <Suspense fallback={<Noop />}>
         <FAQ />
       </Suspense>
+
+      {/* Special ₹99 Counselling Pack Offer Banner Popup */}
+      <PromoBannerPopup />
     </div>
   );
 }
