@@ -56,6 +56,8 @@ export default function MbbsWalaTools() {
                 <WebPImg
                   src={t.img}
                   alt=""
+                  width={400}
+                  height={144}
                   loading="lazy"
                   decoding="async"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"

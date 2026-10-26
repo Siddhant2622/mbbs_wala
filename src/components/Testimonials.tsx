@@ -175,17 +175,19 @@ export default function Testimonials({ full }: { full?: boolean }) {
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 items-center">
             {items.map((_, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => setIdx(i)}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  i === idx ? 'bg-secondary w-8' : 'bg-white/20 w-2 hover:bg-white/40'
-                }`}
+                className="min-w-[24px] min-h-[24px] flex items-center justify-center rounded-full transition-all duration-300"
                 aria-label={`Go to slide ${i + 1}`}
-              />
+              >
+                <span className={`block rounded-full transition-all duration-300 ${
+                  i === idx ? 'bg-secondary w-8 h-2' : 'bg-white/20 w-2 h-2 hover:bg-white/40'
+                }`} />
+              </button>
             ))}
           </div>
           <Link

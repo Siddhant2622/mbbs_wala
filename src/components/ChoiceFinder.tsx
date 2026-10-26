@@ -98,7 +98,7 @@ export default function ChoiceFinder({ embedded = false }: { embedded?: boolean 
             className={`flex-1 py-2 rounded-full text-xs sm:text-sm font-bold transition-all flex flex-col items-center gap-0.5 ${
               field === f.id
                 ? 'bg-[#F97316] text-white shadow-lg shadow-orange-500/25'
-                : 'text-white/55 hover:text-white'
+                : 'text-white/75 hover:text-white'
             }`}
           >
             <span>{f.label}</span>

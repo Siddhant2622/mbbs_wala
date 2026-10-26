@@ -33,6 +33,8 @@ export default function Explainer() {
           <WebPImg
             src="/images/india/students.jpg"
             alt="MBBSWala counselling explainer"
+            width={920}
+            height={517}
             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
           />
           <span className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/30 to-ink/10" />

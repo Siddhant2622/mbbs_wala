@@ -280,7 +280,7 @@ export default function Features() {
                     <span className="block truncate">{feat.title}</span>
                     <span
                       className={`block text-[11px] font-medium mt-0.5 ${
-                        isOn ? 'text-white/70' : 'text-slate-500'
+                        isOn ? 'text-white/70' : 'text-slate-700'
                       }`}
                     >
                       {feat.short}
@@ -449,8 +449,8 @@ export default function Features() {
                 type="button"
                 onClick={() => setActive(i)}
                 aria-label={feat.title}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === active ? 'w-6 bg-[#F97316]' : 'w-1.5 bg-white/25'
+                className={`min-w-[24px] min-h-[24px] flex items-center justify-center rounded-full transition-all ${
+                  i === active ? 'w-6 bg-[#F97316]' : 'w-6 bg-white/25'
                 }`}
               />
             ))}
