@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, Sparkles } from 'lucide-react';
 import { StaggerReveal, staggerItem } from './ScrollReveal';
+import { WebPImg } from '../lib/webp';
 
 interface Pkg {
   id: number;
@@ -94,9 +95,11 @@ export default function PackagesGrid({ limit }: { limit?: number }) {
               className={`group relative flex flex-col min-h-[260px] sm:min-h-[300px] overflow-hidden rounded-2xl sm:rounded-[1.75rem] bg-gradient-to-br ${a.gradient} force-white border border-white/10 shadow-[0_24px_60px_rgba(12,18,34,0.18)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_32px_80px_rgba(12,18,34,0.28)] touch-manipulation`}
             >
               <div className={`pointer-events-none absolute -right-8 -top-8 w-40 h-40 rounded-full blur-3xl opacity-50 group-hover:opacity-80 transition-opacity ${a.glow}`} />
-              <img
+              <WebPImg
                 src={illMap[pkg.slug] || '/images/mbbswala/pkg-steth.jpg'}
                 alt=""
+                loading="lazy"
+                decoding="async"
                 className="absolute bottom-0 right-0 w-40 h-40 object-cover opacity-70 group-hover:opacity-90 group-hover:scale-110 transition-all duration-700 rounded-tl-[2rem] drop-shadow-lg"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />

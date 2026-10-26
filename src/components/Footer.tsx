@@ -65,7 +65,7 @@ export default function Footer() {
               { title: 'Legal', items: legal },
             ].map((col) => (
               <div key={col.title}>
-                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/40 mb-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/60 mb-4">
                   {col.title}
                 </p>
                 <ul className="space-y-2.5">
@@ -86,23 +86,23 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-white/10">
-          <p className="text-xs text-white/40 font-medium">
+          <p className="text-xs text-white/60 font-medium">
             © {new Date().getFullYear()} MBBSWALA. All rights reserved.
           </p>
           <div className="flex gap-2">
             {[
-              { Icon: Instagram, href: 'https://www.instagram.com/mbbswalaofficial' },
-              { Icon: Facebook, href: 'https://www.facebook.com/mbbswala/' },
-              { Icon: Youtube, href: 'https://www.youtube.com/@mbbswala23' },
-              { Icon: Linkedin, href: 'https://www.linkedin.com/company/mbbswalaedu' },
-            ].map(({ Icon, href }) => (
+              { Icon: Instagram, href: 'https://www.instagram.com/mbbswalaofficial', label: 'Instagram' },
+              { Icon: Facebook, href: 'https://www.facebook.com/mbbswala/', label: 'Facebook' },
+              { Icon: Youtube, href: 'https://www.youtube.com/@mbbswala23', label: 'YouTube' },
+              { Icon: Linkedin, href: 'https://www.linkedin.com/company/mbbswalaedu', label: 'LinkedIn' },
+            ].map(({ Icon, href, label }) => (
               <a
                 key={href}
                 href={href}
                 target="_blank"
                 rel="noreferrer"
                 className="w-9 h-9 grid place-items-center rounded-full bg-white/8 hover:bg-[#F97316] transition-colors"
-                aria-label="social"
+                aria-label={label}
               >
                 <Icon className="w-3.5 h-3.5" />
               </a>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Quote, Star } from 'lucide-react';
+import { WebPImg } from '../lib/webp';
 
 interface Testimonial {
   id: number;
@@ -88,19 +89,25 @@ export default function Testimonials({ full }: { full?: boolean }) {
           <div className="grid md:grid-cols-[200px_1fr] min-h-[340px]">
             <div className="relative hidden md:block bg-slate-900 overflow-hidden">
               <AnimatePresence mode="wait">
-                <motion.img
+                <motion.div
                   key={avatar}
-                  src={avatar}
-                  alt={t.name}
                   initial={{ opacity: 0, scale: 1.08 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="absolute inset-0 w-full h-full object-cover opacity-90"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = avatars[0];
-                  }}
-                />
+                  className="absolute inset-0"
+                >
+                  <WebPImg
+                    src={avatar}
+                    alt={t.name}
+                    className="w-full h-full object-cover opacity-90"
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = avatars[0];
+                    }}
+                  />
+                </motion.div>
               </AnimatePresence>
               <div className="absolute inset-0 bg-gradient-to-t from-ink via-transparent to-transparent" />
               <div className="absolute bottom-5 left-5 right-5">
@@ -129,10 +136,14 @@ export default function Testimonials({ full }: { full?: boolean }) {
                     dangerouslySetInnerHTML={{ __html: formatQuote(t.quote) }}
                   />
                   <div className="flex items-center gap-4 md:hidden">
-                    <img
+                    <WebPImg
                       src={avatar}
                       alt={t.name}
+                      width={48}
+                      height={48}
                       className="w-12 h-12 rounded-full object-cover border-2 border-secondary/20"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div>
                       <p className="font-bold text-slate-900">{t.name}</p>
@@ -199,10 +210,14 @@ function Card({ t, avatar }: { t: Testimonial; avatar: string }) {
         dangerouslySetInnerHTML={{ __html: formatQuote(t.quote) }}
       />
       <div className="flex items-center gap-3">
-        <img
+        <WebPImg
           src={t.avatar_url?.includes('mbbswala') ? t.avatar_url : avatar}
           alt={t.name}
+          width={48}
+          height={48}
           className="w-12 h-12 rounded-full object-cover border-2 border-secondary/15"
+          loading="lazy"
+          decoding="async"
           onError={(e) => {
             (e.target as HTMLImageElement).src = avatar;
           }}

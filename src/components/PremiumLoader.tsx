@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { WebPImg } from '../lib/webp';
 
 /**
  * Premium boot loader — ink + orange brand language
@@ -100,7 +101,7 @@ export default function PremiumLoader() {
               transition={{ duration: 0.5 }}
               className="mb-10"
             >
-              <img
+              <WebPImg
                 src="/images/mbbswala/logo.png"
                 alt="MBBS WAALA"
                 className="h-28 w-auto object-contain"

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Globe2, GraduationCap, ArrowUpRight } from 'lucide-react';
+import { WebPImg } from '../lib/webp';
 
 const points = [
   'Government and private medical colleges across India',
@@ -33,7 +34,7 @@ export default function AppPromo() {
           >
             <div className="absolute -inset-4 bg-gradient-to-br from-secondary/15 to-primary/15 rounded-[2rem] blur-2xl opacity-70" />
             <div className="relative img-zoom rounded-[1.75rem] overflow-hidden shadow-2xl border border-black/5 aspect-[16/11]">
-              <img
+              <WebPImg
                 src="/images/india/college-1.jpg"
                 alt="Indian medical college campus"
                 className="w-full h-full object-cover"

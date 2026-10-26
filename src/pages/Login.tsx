@@ -24,6 +24,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { apiJson } from '../lib/api';
 import BrandLogo from '../components/BrandLogo';
 import FullScreenLoader from '../components/FullScreenLoader';
+import { WebPImg, toWebP } from '../lib/webp';
 
 /** Decorative 3D props — positioned only inside the left visual stage */
 const stageProps = [
@@ -598,10 +599,12 @@ export default function Login({ defaultPortal }: LoginProps) {
             >
               <div className="relative mx-auto w-full max-w-[520px] px-8 sm:px-12 py-8 sm:py-10">
                 <div className="relative z-10 overflow-hidden rounded-[1.75rem] border border-black/[0.06] bg-gradient-to-br from-[#FFF7ED] via-white to-[#F8FAFC] p-3 shadow-[0_30px_80px_rgba(15,23,42,0.1)]">
-                  <img
+                  <WebPImg
                     src={portal === 'admin' ? '/images/mbbswala/india-counsel-meet.jpg' : '/images/mbbswala/login-3d-hero.png'}
                     alt="MBBSWala Medical Counselling"
                     className="h-auto w-full rounded-[1.25rem] object-cover aspect-[16/11]"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
 
@@ -609,8 +612,10 @@ export default function Login({ defaultPortal }: LoginProps) {
                   {stageProps.map((item) => (
                     <motion.img
                       key={item.src}
-                      src={item.src}
+                      src={toWebP(item.src)}
                       alt={item.alt}
+                      loading="lazy"
+                      decoding="async"
                       className={`absolute object-contain drop-shadow-[0_18px_36px_rgba(15,23,42,0.14)] ${item.className}`}
                       style={{ rotate: item.rotate }}
                       initial={{ opacity: 0, scale: 0.8, y: 16 }}

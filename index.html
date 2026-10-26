@@ -1,24 +1,6 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
-  <head>
-    <!-- Meta Pixel Code -->
-    <script>
-      !function(f,b,e,v,n,t,s)
-      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-      n.queue=[];t=b.createElement(e);t.async=!0;
-      t.src=v;s=b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t,s)}(window, document,'script',
-      'https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init', '1641094254309118');
-      fbq('track', 'PageView');
-    </script>
-    <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=1641094254309118&ev=PageView&noscript=1"
-    /></noscript>
-    <!-- End Meta Pixel Code -->
-    <meta charset="UTF-8" />
+  <head>    <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/images/mbbswala/favicon.png" />
     <link rel="icon" type="image/png" href="/images/mbbswala/icon.png" sizes="256x256" />
     <link rel="apple-touch-icon" href="/images/mbbswala/icon.png" />
@@ -29,7 +11,6 @@
     <meta name="keywords" content="MBBS Wala, MBBSWaala, NEET Rank Predictor, NEET College Finder, NEET Seat Matrix, Medical Admission Counselling, MBBS Admission India, AIQ cutoff, State quota cutoff" />
     
     <!-- Open Graph / Social Media Meta Tags -->
-    <link rel="preload" href="/images/mbbswala/logo.png" as="image" type="image/png" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://mbbs-waala.dhruvkamar2005.workers.dev/" />
     <meta property="og:title" content="MBBS Waala - NEET College Finder & Rank Predictor" />
@@ -70,8 +51,12 @@
       })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="MBBSWALA — Easy NEET counselling and MBBS admission help in India & abroad. Seat matrix, cut-offs, college options and real counsellor support from Bhopal." />
-    <title>MBBSWALA — NEET Counselling & MBBS Admission Help</title>
+    <!-- LCP hero image preload (WebP for modern browsers) -->
+    <link rel="preload" as="image" href="/images/mbbswala/hero-warm.webp" type="image/webp" />
+    <!-- Logo preload (WebP ~14KB vs 262KB PNG) -->
+    <link rel="preload" href="/images/mbbswala/logo-master.webp" as="image" type="image/webp" />
+    <!-- Preconnect to API backend (saves ~300ms LCP) -->
+    <link rel="preconnect" href="https://mpc2-prod-28-is5qnl632q-ue.a.run.app" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <script data-arena-recording="true">(function(){
@@ -758,5 +743,24 @@ loadRrweb();
   console.log('[element-picker] Loaded. inspect:mode / arena:edit-mode (or Alt+Shift+I / Alt+Shift+E).');
 })();
 </script>
+      <!-- Meta Pixel Code (deferred — loads after page is interactive) -->
+    <script>
+      window.addEventListener('load', function() {
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '1641094254309118');
+        fbq('track', 'PageView');
+      });
+    </script>
+    <noscript><img height='1' width='1' style='display:none'
+    src='https://www.facebook.com/tr?id=1641094254309118&ev=PageView&noscript=1'
+    /></noscript>
+    <!-- End Meta Pixel Code -->
   </body>
 </html>

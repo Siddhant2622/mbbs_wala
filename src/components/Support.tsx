@@ -8,16 +8,22 @@ const cards = [
     title: 'Answers for your case',
     desc: 'We look at your rank, category, budget and home state — not one common list for everyone.',
     img: '/images/india/counsel-meet.jpg',
+    webp: '/images/india/counsel-meet.webp',
+    w: 640, h: 384,
   },
   {
     title: 'Talk to real counsellors',
     desc: 'People who handle All India and state counselling every year, including Madhya Pradesh.',
     img: '/images/india/doctors-group.jpg',
+    webp: '/images/india/doctors-group.webp',
+    w: 640, h: 384,
   },
   {
     title: 'Ask as much as you need',
     desc: 'Call or message until you and your family feel clear about the next step.',
     img: '/images/india/family-consult.jpg',
+    webp: '/images/india/family-consult.webp',
+    w: 640, h: 384,
   },
 ];
 
@@ -67,11 +73,18 @@ export default function Support() {
             className="group overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_16px_40px_rgba(15,23,42,0.08)]"
           >
             <div className="h-48 overflow-hidden">
-              <img
-                src={c.img}
-                alt={c.title}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
+              <picture>
+                <source srcSet={c.webp} type="image/webp" />
+                <img
+                  src={c.img}
+                  alt={c.title}
+                  width={c.w}
+                  height={c.h}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+              </picture>
             </div>
             <div className="p-6 md:p-7">
               <h3 className="text-xl font-bold text-slate-900 mb-2">{c.title}</h3>

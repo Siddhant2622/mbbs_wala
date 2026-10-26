@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Play, X, Clapperboard } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { WebPImg } from '../lib/webp';
 
 export default function Explainer() {
   const [open, setOpen] = useState(false);
@@ -29,7 +30,7 @@ export default function Explainer() {
           whileTap={{ scale: 0.99 }}
           className="relative w-full max-w-[920px] aspect-video rounded-[2rem] overflow-hidden group shadow-[0_40px_100px_rgba(12,18,34,0.2)] border border-black/5 text-left"
         >
-          <img
+          <WebPImg
             src="/images/india/students.jpg"
             alt="MBBSWala counselling explainer"
             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"

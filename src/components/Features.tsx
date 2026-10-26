@@ -13,6 +13,7 @@ import {
   Check,
   type LucideIcon,
 } from 'lucide-react';
+import { WebPImg } from '../lib/webp';
 
 type FeatureConfig = {
   match: string;
@@ -342,10 +343,12 @@ export default function Features() {
                 </div>
 
                 <div className="relative order-1 lg:order-2 min-h-[240px] lg:min-h-full overflow-hidden bg-white/5">
-                  <img
+                  <WebPImg
                     src={f.image}
                     alt={f.title}
                     className="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0E1117]/35 via-transparent to-transparent lg:bg-gradient-to-l lg:from-transparent lg:to-[#0E1117]/15" />
                   <div className="absolute bottom-4 left-4 right-4 lg:bottom-6 lg:left-6">
@@ -394,7 +397,7 @@ export default function Features() {
               className="rounded-3xl overflow-hidden border border-slate-200 bg-white shadow-sm"
             >
               <div className="aspect-[16/10] relative">
-                <img src={f.image} alt={f.title} className="w-full h-full object-cover" />
+                <WebPImg src={f.image} alt={f.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                 <span className="absolute bottom-3 left-3 text-[11px] font-bold uppercase tracking-wider text-white bg-black/40 backdrop-blur px-2.5 py-1 rounded-full">
                   Feature {f.badge}

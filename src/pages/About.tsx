@@ -3,13 +3,14 @@ import { ScrollReveal, StaggerReveal, staggerItem } from '../components/ScrollRe
 import TextReveal from '../components/TextReveal';
 import Magnetic from '../components/Magnetic';
 import { motion } from 'framer-motion';
+import { WebPImg } from '../lib/webp';
 
 export default function About() {
   return (
     <div className="px-4 sm:px-8 py-12 md:py-16 max-w-4xl mx-auto">
       <ScrollReveal variant="blur">
         <div className="rounded-3xl overflow-hidden mb-10 h-56 md:h-72 shadow-2xl">
-          <img
+          <WebPImg
             src="/images/india/doctors-group.jpg"
             alt="MBBSWala team"
             className="w-full h-full object-cover"

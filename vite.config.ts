@@ -86,6 +86,16 @@ export default defineConfig(async ({ mode }) => {
     build: {
       cssCodeSplit: true,
       sourcemap: false,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom'],
+            'vendor-router': ['react-router-dom'],
+            'vendor-motion': ['framer-motion'],
+            'vendor-lucide': ['lucide-react'],
+          },
+        },
+      },
     },
   }
 })

@@ -101,7 +101,7 @@ export default function Stats() {
             <p className="font-display text-3xl sm:text-4xl font-bold text-slate-900 leading-none mb-2">
               <CountUp to={s.numeric_value} prefix={s.prefix} suffix={s.suffix} />
             </p>
-            <p className="text-xs sm:text-sm font-semibold text-slate-500 leading-snug">{s.label}</p>
+            <p className="text-xs sm:text-sm font-semibold text-slate-600 leading-snug">{s.label}</p>
           </div>
         ))}
       </div>

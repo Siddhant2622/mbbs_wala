@@ -28,18 +28,27 @@ export default function Hero() {
       id="hero"
       className="relative min-h-[min(88svh,860px)] flex flex-col items-center justify-center overflow-hidden bg-[#0B0D12] text-white"
     >
-      {/* College photo background (previous version) */}
-      <img
-        src="/images/mbbswala/hero-warm.jpg"
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover object-center scale-105"
-        loading="eager"
-        decoding="async"
-        fetchPriority="high"
-        onError={(e) => {
-          (e.target as HTMLImageElement).src = '/images/mbbswala/hero-main.jpg';
-        }}
-      />
+      {/* College photo background — WebP for modern browsers, JPG fallback */}
+      <picture className="absolute inset-0 w-full h-full">
+        <source
+          type="image/webp"
+          srcSet="/images/mbbswala/hero-warm-mobile.webp 720w, /images/mbbswala/hero-warm.webp 1200w"
+          sizes="100vw"
+        />
+        <img
+          src="/images/mbbswala/hero-warm.jpg"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center scale-105"
+          width={1200}
+          height={627}
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = '/images/mbbswala/hero-main.jpg';
+          }}
+        />
+      </picture>
 
       {/* Readable dark overlays */}
       <div className="absolute inset-0 bg-[#0B0D12]/72" />

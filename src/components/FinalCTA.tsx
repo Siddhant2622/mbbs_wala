@@ -3,6 +3,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
 import { Check, ArrowRight } from 'lucide-react';
 import Magnetic from './Magnetic';
+import { WebPImg } from '../lib/webp';
 
 /**
  * Closing chapter — night editorial palette:
@@ -23,7 +24,7 @@ export default function FinalCTA() {
       className="relative py-16 sm:py-24 md:py-32 px-4 sm:px-6 overflow-hidden min-h-[min(72vh,820px)] flex items-center night-band"
     >
       <motion.div className="absolute inset-0" style={{ y, scale }}>
-        <img
+        <WebPImg
           src="/images/india/gmc.jpg"
           alt=""
           className="absolute inset-0 w-full h-full object-cover opacity-45"
@@ -75,7 +76,7 @@ export default function FinalCTA() {
 
         <div className="relative mx-auto max-w-3xl">
           <div className="absolute -inset-6 bg-gradient-to-r from-[#D4B08C]/15 via-transparent to-[#F97316]/12 blur-3xl rounded-[2rem]" />
-          <img
+          <WebPImg
             src="/images/mbbswala/feat-02-data.jpg"
             alt="MBBSWala counselling tools"
             className="relative mx-auto w-full rounded-2xl border border-white/12 shadow-[0_30px_80px_rgba(0,0,0,0.45)] object-cover"

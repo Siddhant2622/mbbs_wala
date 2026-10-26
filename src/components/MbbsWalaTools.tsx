@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowUpRight } from 'lucide-react';
+import { WebPImg } from '../lib/webp';
 
 const tools = [
   {
@@ -52,9 +53,11 @@ export default function MbbsWalaTools() {
               className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white transition-all duration-400 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(15,23,42,0.1)] hover:border-[#F97316]/40"
             >
               <div className="relative h-36 overflow-hidden">
-                <img
+                <WebPImg
                   src={t.img}
                   alt=""
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent" />

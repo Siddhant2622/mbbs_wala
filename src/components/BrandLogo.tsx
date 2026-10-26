@@ -37,6 +37,13 @@ export default function BrandLogo({
   size = 'md',
   markOnly = false,
 }: Props) {
+  // WebP versions for optimized delivery (~10x smaller than PNG)
+  const webpSrc = markOnly
+    ? undefined // no WebP mark yet, use PNG
+    : size === 'sm'
+      ? '/images/mbbswala/logo-master-sm.webp'
+      : '/images/mbbswala/logo-master.webp';
+
   const primarySrc = markOnly
     ? '/images/mbbswala/icon.png'
     : '/images/mbbswala/logo-master.png';
@@ -51,48 +58,57 @@ export default function BrandLogo({
       ? '/images/mbbswala/brand-logo-on-dark.svg'
       : '/images/mbbswala/brand-logo.svg';
 
+  const imgEl = (
+    <img
+      src={`${primarySrc}?v=3`}
+      alt="MBBS WAALA"
+      className={`brand-logo block object-contain bg-transparent border-0 shadow-none ${
+        markOnly
+          ? `${markSize[size]} object-center !max-w-none`
+          : `${sizeClass[size]} object-left`
+      } ${imgClassName}`}
+      style={{
+        background: 'transparent',
+        backgroundColor: 'transparent',
+        boxShadow: 'none',
+        // No brightness filters — they create a washed gray plate
+        filter: 'none',
+      }}
+      width={markOnly ? 48 : 240}
+      height={markOnly ? 48 : 64}
+      decoding="async"
+      draggable={false}
+      onError={(e) => {
+        const el = e.currentTarget;
+        const step = Number(el.dataset.step || '0');
+        if (step === 0) {
+          el.dataset.step = '1';
+          el.src = `${fallbackSrc}?v=3`;
+          return;
+        }
+        if (step === 1) {
+          el.dataset.step = '2';
+          el.src = svgFallback;
+          return;
+        }
+        el.style.display = 'none';
+        const sib = el.nextElementSibling as HTMLElement | null;
+        if (sib) sib.hidden = false;
+      }}
+    />
+  );
+
   const img = (
     <span
       className={`inline-flex items-center justify-center min-w-0 shrink-0 bg-transparent p-0 m-0 border-0 shadow-none ${className}`}
       style={{ background: 'transparent', boxShadow: 'none' }}
     >
-      <img
-        src={`${primarySrc}?v=3`}
-        alt="MBBS WAALA"
-        className={`brand-logo block object-contain bg-transparent border-0 shadow-none ${
-          markOnly
-            ? `${markSize[size]} object-center !max-w-none`
-            : `${sizeClass[size]} object-left`
-        } ${imgClassName}`}
-        style={{
-          background: 'transparent',
-          backgroundColor: 'transparent',
-          boxShadow: 'none',
-          // No brightness filters — they create a washed gray plate
-          filter: 'none',
-        }}
-        width={markOnly ? 48 : 240}
-        height={markOnly ? 48 : 64}
-        decoding="async"
-        draggable={false}
-        onError={(e) => {
-          const el = e.currentTarget;
-          const step = Number(el.dataset.step || '0');
-          if (step === 0) {
-            el.dataset.step = '1';
-            el.src = `${fallbackSrc}?v=3`;
-            return;
-          }
-          if (step === 1) {
-            el.dataset.step = '2';
-            el.src = svgFallback;
-            return;
-          }
-          el.style.display = 'none';
-          const sib = el.nextElementSibling as HTMLElement | null;
-          if (sib) sib.hidden = false;
-        }}
-      />
+      {webpSrc && !markOnly ? (
+        <picture>
+          <source srcSet={webpSrc} type="image/webp" />
+          {imgEl}
+        </picture>
+      ) : imgEl}
       <span
         hidden
         className={`font-black tracking-tight leading-none select-none whitespace-nowrap ${
