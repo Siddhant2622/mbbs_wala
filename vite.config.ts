@@ -42,6 +42,7 @@ export default defineConfig(async ({ mode }) => {
     apiDevMiddlewarePlugin(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'script-defer',
       includeAssets: ['images/mbbswala/favicon.png', 'images/mbbswala/pwa-icon.jpg'],
       manifest: {
         name: 'MBBS Waala',

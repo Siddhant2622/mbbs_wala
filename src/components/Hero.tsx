@@ -31,12 +31,16 @@ export default function Hero() {
       {/* College photo background — WebP for modern browsers, JPG fallback */}
       <picture className="absolute inset-0 w-full h-full">
         <source
+          media="(max-width: 768px)"
           type="image/webp"
-          srcSet="/images/mbbswala/hero-warm-mobile.webp 720w, /images/mbbswala/hero-warm.webp 1200w"
-          sizes="100vw"
+          srcSet="/images/mbbswala/hero-warm-mobile.webp"
+        />
+        <source
+          type="image/webp"
+          srcSet="/images/mbbswala/hero-warm.webp"
         />
         <img
-          src="/images/mbbswala/hero-warm.jpg"
+          src="/images/mbbswala/hero-warm.webp"
           alt=""
           className="absolute inset-0 w-full h-full object-cover object-center scale-105"
           width={1200}

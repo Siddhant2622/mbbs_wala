@@ -65,11 +65,11 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Critical resource hints -->
-    <!-- LCP hero: responsive WebP preload (mobile 720w, desktop 1280w) -->
+    <!-- LCP hero: responsive WebP preload (mobile vs desktop) -->
+    <link rel="preload" as="image" href="/images/mbbswala/hero-warm-mobile.webp" type="image/webp"
+          media="(max-width: 768px)" fetchpriority="high" />
     <link rel="preload" as="image" href="/images/mbbswala/hero-warm.webp" type="image/webp"
-          imagesrcset="/images/mbbswala/hero-warm-mobile.webp 720w, /images/mbbswala/hero-warm.webp 1280w"
-          imagesizes="100vw" />
+          media="(min-width: 769px)" fetchpriority="high" />
     <!-- Logo preload -->
     <link rel="preload" href="/images/mbbswala/logo-master-sm.webp" as="image" type="image/webp" />
     <!-- Inter font preload (eliminates font-swap flash) -->
@@ -83,20 +83,43 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Meta Pixel Code (deferred — loads after page is interactive, no render blocking) -->
+    <!-- Meta Pixel Code (deferred to user interaction / idle to keep initial CPU free for LCP) -->
     <script>
-      window.addEventListener('load', function() {
-        !function(f,b,e,v,n,t,s)
-        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-        fbq('init', '1641094254309118');
-        fbq('track', 'PageView');
-      });
+      (function() {
+        var initialized = false;
+        function initMetaPixel() {
+          if (initialized) return;
+          initialized = true;
+          !function(f,b,e,v,n,t,s)
+          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+          n.queue=[];t=b.createElement(e);t.async=!0;
+          t.src=v;s=b.getElementsByTagName(e)[0];
+          s.parentNode.insertBefore(t,s)}(window, document,'script',
+          'https://connect.facebook.net/en_US/fbevents.js');
+          fbq('init', '1641094254309118');
+          fbq('track', 'PageView');
+        }
+
+        var interactionEvents = ['scroll', 'touchstart', 'click', 'mousemove'];
+        function onInteract() {
+          interactionEvents.forEach(function(evt) {
+            window.removeEventListener(evt, onInteract, { passive: true });
+          });
+          initMetaPixel();
+        }
+        interactionEvents.forEach(function(evt) {
+          window.addEventListener(evt, onInteract, { passive: true, once: true });
+        });
+
+        // Fallback: initialize during browser idle or after 4s timeout
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(function() { setTimeout(initMetaPixel, 3500); });
+        } else {
+          setTimeout(initMetaPixel, 4000);
+        }
+      })();
     </script>
     <noscript><img height='1' width='1' style='display:none'
     src='https://www.facebook.com/tr?id=1641094254309118&ev=PageView&noscript=1'
