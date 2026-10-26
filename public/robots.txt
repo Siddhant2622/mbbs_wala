@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://mbbs-waala.dhruvkamar2005.workers.dev/sitemap.xml
+Agentmap: https://mbbs-waala.dhruvkamar2005.workers.dev/ai-catalog.json

@@ -1,0 +1,77 @@
+{
+  "$schema": "https://agenticresourcediscovery.org/schemas/v1/ard.json",
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "MBBS Waala",
+    "identifier": "did:web:mbbs-waala.dhruvkamar2005.workers.dev",
+    "documentationUrl": "https://mbbs-waala.dhruvkamar2005.workers.dev/about-us",
+    "logoUrl": "https://mbbs-waala.dhruvkamar2005.workers.dev/images/mbbswala/logo.png"
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:mbbs-waala.dhruvkamar2005.workers.dev:services:rank-calculator",
+      "displayName": "NEET Rank & College Predictor",
+      "type": "text/html",
+      "url": "https://mbbs-waala.dhruvkamar2005.workers.dev/rank-calculator",
+      "description": "Calculates prospective NEET UG and NEET PG All India Rank and matches candidates with safe, moderate, and reach medical colleges.",
+      "representativeQueries": [
+        "predict medical college from NEET score",
+        "NEET UG rank calculator",
+        "which medical college can I get with my NEET rank"
+      ],
+      "tags": ["neet-ug", "rank-predictor", "medical-admission", "counselling"]
+    },
+    {
+      "identifier": "urn:air:mbbs-waala.dhruvkamar2005.workers.dev:services:college-comparison",
+      "displayName": "Medical College Comparison & Matrix",
+      "type": "text/html",
+      "url": "https://mbbs-waala.dhruvkamar2005.workers.dev/compare",
+      "description": "Side-by-side comparison of Indian medical institutions evaluating MBBS seats, AIQ and state quotas, annual tuition fees, and compulsory bond obligations.",
+      "representativeQueries": [
+        "compare MBBS colleges in India",
+        "medical college fees and bond comparison",
+        "NEET cutoffs comparison between colleges"
+      ],
+      "tags": ["college-comparison", "seat-matrix", "fees", "bonds"]
+    },
+    {
+      "identifier": "urn:air:mbbs-waala.dhruvkamar2005.workers.dev:services:seat-matrix",
+      "displayName": "NEET Seat Matrix Explorer",
+      "type": "text/html",
+      "url": "https://mbbs-waala.dhruvkamar2005.workers.dev/seat-matrix",
+      "description": "Filterable seat matrix of Government, Private, and Deemed medical colleges across all Indian states.",
+      "representativeQueries": [
+        "MBBS seat matrix India",
+        "government medical college seats list",
+        "state wise medical college seat distribution"
+      ],
+      "tags": ["seat-matrix", "mbbs", "bds", "ayush"]
+    },
+    {
+      "identifier": "urn:air:mbbs-waala.dhruvkamar2005.workers.dev:services:cutoffs",
+      "displayName": "NEET Historical Cut-off Closing Ranks",
+      "type": "text/html",
+      "url": "https://mbbs-waala.dhruvkamar2005.workers.dev/cutoffs",
+      "description": "Historical NEET UG and NEET PG round-by-round closing ranks categorized by state, category (General, OBC, SC, ST, EWS), and quota type.",
+      "representativeQueries": [
+        "past year NEET MBBS cutoff",
+        "closing rank for AIIMS and GMCs",
+        "NEET state quota cutoffs"
+      ],
+      "tags": ["neet-cutoffs", "closing-ranks", "aiq", "state-quota"]
+    },
+    {
+      "identifier": "urn:air:mbbs-waala.dhruvkamar2005.workers.dev:services:counselling-packages",
+      "displayName": "Medical Counselling Expert Support Packages",
+      "type": "text/html",
+      "url": "https://mbbs-waala.dhruvkamar2005.workers.dev/packages",
+      "description": "Comprehensive personalized counselling assistance packages with expert medical counsellors for choice filling, document verification, and seat allocation.",
+      "representativeQueries": [
+        "NEET counselling guidance packages",
+        "hire NEET admission counsellor",
+        "MBBS choice filling help"
+      ],
+      "tags": ["counselling", "guidance", "packages", "mbbs-admission"]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+# MBBS Waala - NEET Medical Admission Counselling
+
+> MBBS Waala is India's leading NEET UG and NEET PG medical admission counselling platform, providing college finders, accurate rank predictors, fee matrices, and expert counselling guidance.
+
+## Core Services & Tools
+
+- [NEET Rank Predictor](https://mbbs-waala.dhruvkamar2005.workers.dev/rank-calculator): Predict medical college admissions and calculate prospective All India / State rank based on NEET score and category.
+- [Medical College Finder & Comparison](https://mbbs-waala.dhruvkamar2005.workers.dev/compare): Side-by-side comparison of seats, AIQ cutoffs, tuition fees, and compulsory bond conditions for Indian medical colleges.
+- [Seat Matrix Directory](https://mbbs-waala.dhruvkamar2005.workers.dev/seat-matrix): Detailed, filterable seat matrix across Government, Private, and Deemed medical colleges in India.
+- [Past Closing Cut-offs](https://mbbs-waala.dhruvkamar2005.workers.dev/cutoffs): Closing ranks by category and quota for planning round-by-round choice filling.
+- [Admission Counselling Packages](https://mbbs-waala.dhruvkamar2005.workers.dev/packages): 1-on-1 expert counsellor support for MBBS, BDS, BAMS, BHMS, and NEET PG admissions.
+- [Medical Colleges Directory](https://mbbs-waala.dhruvkamar2005.workers.dev/colleges): Complete directory of recognized medical institutes with college profiles, fees, and state quota breakdown.
+
+## Counselling Courses Covered
+
+- [MBBS Admission Guidance](https://mbbs-waala.dhruvkamar2005.workers.dev/neet-ug): Comprehensive NEET UG counselling strategy, choice filling guidance, and AIQ vs State seat allocation.
+- [BDS Counselling](https://mbbs-waala.dhruvkamar2005.workers.dev/bds): Dental college admissions, seat quotas, and closing rank analysis.
+- [AYUSH Counselling (BAMS, BHMS, BUMS)](https://mbbs-waala.dhruvkamar2005.workers.dev/ayush-combo): Government and private AYUSH college cutoffs, eligibility, and counselling schedules.
+- [NEET PG Counselling](https://mbbs-waala.dhruvkamar2005.workers.dev/neet-pg): MD, MS, and DNB branch seat matrix, clinical stipend details, and choice order optimization.
+
+## Organization & Contact
+
+- [About MBBS Waala](https://mbbs-waala.dhruvkamar2005.workers.dev/about-us): Learn about our mission, senior counsellors team, and track record.
+- [Admission Helpline & Contact](https://mbbs-waala.dhruvkamar2005.workers.dev/contact): Connect with admission advisors for personalized 1-on-1 consultation.
+- [Success Stories & Testimonials](https://mbbs-waala.dhruvkamar2005.workers.dev/testimonials): Student and parent reviews across previous counselling seasons.
